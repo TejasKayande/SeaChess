@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.15)
+project(Chess LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_subdirectory(dependencies/raylib)
+
+file(GLOB_RECURSE SOURCES 
+    source/main.cpp
+    source/window.cpp
+    source/chess.cpp
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
+
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
+endif()
+
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
