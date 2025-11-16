@@ -1,18 +1,9 @@
 
 #include "window.hpp"
 
-Window::Window() {
-    
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Chess");
-    _onMenu = false;
-}
+global bool G_onMenu = false;
 
-Window::~Window() {
-
-    CloseWindow(); 
-}
-
-Section Window::getBoardSection() const {
+Section Window::getBoardSection() {
 
     Section sc = { };
     sc.x = 0;
@@ -23,7 +14,7 @@ Section Window::getBoardSection() const {
     return sc;
 }
 
-Section Window::getStatusSection() const {
+Section Window::getStatusSection() {
 
     Section sc = { };
     sc.x = 0;
@@ -34,7 +25,7 @@ Section Window::getStatusSection() const {
     return sc;
 }
 
-Section Window::getInformationSection() const {
+Section Window::getInformationSection() {
     
     Section sc = { };
 
@@ -46,7 +37,7 @@ Section Window::getInformationSection() const {
     return sc;
 }
 
-Section Window::getMenuSection() const {
+Section Window::getMenuSection() {
     
     Section sc = { };
 
@@ -60,10 +51,10 @@ Section Window::getMenuSection() const {
 
 void Window::toggleMenu() {
 
-    _onMenu = !_onMenu;
+    G_onMenu = !G_onMenu;
 }
 
-bool Window::isOnMenu() const {
+bool Window::isOnMenu() {
 
-    return _onMenu;
+    return G_onMenu;
 }

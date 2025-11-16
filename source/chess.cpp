@@ -1,6 +1,8 @@
 #include "chess.hpp"
 #include <sstream>
 
+using namespace Chess;
+
 Board::Board() 
 : _lPawn(0), _lKnight(0), _lBishop(0), _lRook(0), _lQueen(0), _lKing(0),
   _dPawn(0), _dKnight(0), _dBishop(0), _dRook(0), _dQueen(0), _dKing(0),
