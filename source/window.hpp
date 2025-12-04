@@ -3,12 +3,12 @@
 #include "base.hpp"
 #include <raylib.h>
 
-// NOTE(Tejas): This is so that in the future if we want to remove raylib
-using Section = Rectangle;
-
 namespace Window {
 
-    enum Sections {
+    // NOTE(Tejas): This is so that in the future if we want to remove raylib
+    using Section = Rectangle;
+
+    enum SectionID {
         MENU = 0,
         BOARD,
         STATUS,
@@ -32,5 +32,7 @@ namespace Window {
 
     void toggleMenu();
     bool isOnMenu();
+
+    SectionID getSectionID(int x, int y);
 
 } // namespace Window

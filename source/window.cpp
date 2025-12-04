@@ -3,7 +3,7 @@
 
 global bool G_onMenu = false;
 
-Section Window::getBoardSection() {
+Window::Section Window::getBoardSection() {
 
     Section sc = { };
     sc.x = 0;
@@ -14,7 +14,7 @@ Section Window::getBoardSection() {
     return sc;
 }
 
-Section Window::getStatusSection() {
+Window::Section Window::getStatusSection() {
 
     Section sc = { };
     sc.x = 0;
@@ -25,7 +25,7 @@ Section Window::getStatusSection() {
     return sc;
 }
 
-Section Window::getInformationSection() {
+Window::Section Window::getInformationSection() {
     
     Section sc = { };
 
@@ -37,7 +37,7 @@ Section Window::getInformationSection() {
     return sc;
 }
 
-Section Window::getMenuSection() {
+Window::Section Window::getMenuSection() {
     
     Section sc = { };
 
@@ -57,4 +57,24 @@ void Window::toggleMenu() {
 bool Window::isOnMenu() {
 
     return G_onMenu;
+}
+
+Window::SectionID Window::getSectionID(int x, int y) {
+
+    SectionID section_id;
+
+    Section scb, scm, sci, scs;
+    scb = getBoardSection();
+    sci = getInformationSection();
+    scs = getStatusSection();
+    scm = getMenuSection();
+
+    if (x > scb.x && x < (scb.x + scb.width) && y > scb.y && y < (scb.y + scb.height)) section_id = SectionID::BOARD;
+    if (x > scs.x && x < (scs.x + scs.width) && y > scs.y && y < (scs.y + scs.height)) section_id = SectionID::STATUS;
+    if (x > sci.x && x < (sci.x + sci.width) && y > sci.y && y < (sci.y + sci.height)) section_id = SectionID::INFORMATION;
+
+    if (isOnMenu())
+        if (x > scm.x && x < (scm.x + scm.width) && y > scm.y && y < (scm.y + scm.height)) section_id = SectionID::MENU;
+
+    return section_id;
 }

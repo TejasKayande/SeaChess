@@ -28,6 +28,10 @@ namespace Chess {
 
         constexpr bool operator==(const Square &other) const { return (index == other.index); }
         constexpr bool operator!=(const Square &other) const { return (index != other.index); }
+
+        // NOTE(Tejas): For now lets hard code the board to be 8x8
+        constexpr bool isValid() const { return index < 64; }
+        // constexpr Square invalid() { return Square(255); }
     };
 
     struct Piece {

@@ -4,7 +4,8 @@
 using namespace Render;
 
 // NOTE(Tejas): since I only have one type of texuture that will last for the
-//              life of the application, Im not going to worry about UnLoading them.
+//              life of the application, Im not going to worry about UnLoading
+//              the texture for now.
 struct _Texture {
     Texture2D lPawn, lKnight, lBishop, lRook, lQueen, lKing;
     Texture2D dPawn, dKnight, dBishop, dRook, dQueen, dKing;
@@ -28,17 +29,19 @@ internal void _initTexture() {
     G_tex.dRook   = LoadTexture("../assets/texture/dRook.png");
     G_tex.dQueen  = LoadTexture("../assets/texture/dQueen.png");
     G_tex.dKing   = LoadTexture("../assets/texture/dKing.png");
+
+    G_tex_init = true;
 }
 
-void Render::renderBoard(const Section &area, const Chess::Board& board) {
+void Render::renderBoard(const Window::Section &area, const Chess::Board& board) {
 
     if (!G_tex_init) _initTexture();
 
     DrawRectangle(area.x, area.y, area.width, area.height, BROWN);
 
-    for (int rank = 0; rank < 8; ++rank) {
+    for (int rank = 0; rank < Chess::MAX_RANK; rank++) {
 
-        for (int file = 0; file < 8; ++file) {
+        for (int file = 0; file < Chess::MAX_FILE; file++) {
 
             Color squareColor = ((rank + file) % 2 == 0) ? RAYWHITE : DARKBROWN;
 
@@ -77,28 +80,24 @@ void Render::renderBoard(const Section &area, const Chess::Board& board) {
 
             if (tex) {
                 float scale = static_cast<float>(Window::TEXTURE_SIZE) / tex->width;
-                DrawTextureEx(*tex,
-                              Vector2{(float)x, (float)y},
-                              0.0f,
-                              scale,
-                              WHITE);
+                DrawTextureEx(*tex, Vector2{(float)x, (float)y}, 0.0f, scale, WHITE);
             }
         }
     }   
 }
 
-void Render::renderMenu(const Section &area) {
+void Render::renderMenu(const Window::Section &area) {
 
     Color menu_background = Color(0x44, 0x44, 0x44, 0x99);
     DrawRectangleRec(area, menu_background);
 }
 
-void Render::renderInfo(const Section &area) {
+void Render::renderInfo(const Window::Section &area) {
 
     DrawRectangleRec(area, YELLOW);
 }
 
-void Render::renderStatus(const Section &area) {
+void Render::renderStatus(const Window::Section &area) {
 
     DrawRectangleRec(area, GREEN);
 }

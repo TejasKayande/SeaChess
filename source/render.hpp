@@ -8,11 +8,9 @@
 
 namespace Render {
 
-    
-
-    void renderBoard(const Section &area, const Chess::Board& board);
-    void renderMenu(const Section &area);
-    void renderInfo(const Section &area);
-    void renderStatus(const Section &area);
+    void renderBoard(const Window::Section &area, const Chess::Board& board);
+    void renderMenu(const Window::Section &area);
+    void renderInfo(const Window::Section &area);
+    void renderStatus(const Window::Section &area);
 
 } // namespace Render

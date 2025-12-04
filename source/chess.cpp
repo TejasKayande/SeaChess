@@ -128,7 +128,6 @@ Piece Board::getPieceAt(const Square& sq) const {
 
     if (_lOccupied & mask) {
         if (_lPawn   & mask) return Piece(PType::PAWN  , PColor::LIGHT);
-
         if (_lKnight & mask) return Piece(PType::KNIGHT, PColor::LIGHT);
         if (_lBishop & mask) return Piece(PType::BISHOP, PColor::LIGHT);
         if (_lRook   & mask) return Piece(PType::ROOK  , PColor::LIGHT);
