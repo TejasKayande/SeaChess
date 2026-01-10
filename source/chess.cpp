@@ -241,3 +241,10 @@ void Board::reset() {
 
     _turn = Player::LIGHT;
 }
+
+void Board::move(Square from, Square to) {
+
+    Piece pc = getPieceAt(from);
+    setPieceAt(from, Piece::nopiece());
+    setPieceAt(to, pc);
+}

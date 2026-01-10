@@ -78,3 +78,28 @@ Window::SectionID Window::getSectionID(int x, int y) {
 
     return section_id;
 }
+
+bool Window::onBoard(int x, int y) {
+    
+    return Window::getSectionID(x, y) == Window::SectionID::BOARD;
+}
+
+bool Window::onStatus(int x, int y) {
+    
+    return Window::getSectionID(x, y) == Window::SectionID::STATUS;
+}
+
+bool Window::onInformation(int x, int y) {
+    
+    return Window::getSectionID(x, y) == Window::SectionID::INFORMATION;
+}
+
+Chess::Square Window::getSquare(int x, int y) {
+
+    if (!Window::onBoard(x, y)) return Chess::Square();
+
+    int rank = y / SQUARE_DIM;
+    int file = x / SQUARE_DIM;
+
+    return Chess::Square(rank, file);
+}

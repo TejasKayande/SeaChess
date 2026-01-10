@@ -14,47 +14,73 @@ struct _Texture {
 global _Texture G_tex;
 global bool    G_tex_init = false;
 
+// TODO(Tejas): Free These!
 internal void _initTexture() {
     
-    G_tex.lPawn   = LoadTexture("../assets/texture/lPawn.png");
-    G_tex.lKnight = LoadTexture("../assets/texture/lKnight.png");
-    G_tex.lBishop = LoadTexture("../assets/texture/lBishop.png");
-    G_tex.lRook   = LoadTexture("../assets/texture/lRook.png");
-    G_tex.lQueen  = LoadTexture("../assets/texture/lQueen.png");
-    G_tex.lKing   = LoadTexture("../assets/texture/lKing.png");
+    G_tex.lPawn   = ::LoadTexture("../assets/texture/lPawn.png");
+    G_tex.lKnight = ::LoadTexture("../assets/texture/lKnight.png");
+    G_tex.lBishop = ::LoadTexture("../assets/texture/lBishop.png");
+    G_tex.lRook   = ::LoadTexture("../assets/texture/lRook.png");
+    G_tex.lQueen  = ::LoadTexture("../assets/texture/lQueen.png");
+    G_tex.lKing   = ::LoadTexture("../assets/texture/lKing.png");
 
-    G_tex.dPawn   = LoadTexture("../assets/texture/dPawn.png");
-    G_tex.dKnight = LoadTexture("../assets/texture/dKnight.png");
-    G_tex.dBishop = LoadTexture("../assets/texture/dBishop.png");
-    G_tex.dRook   = LoadTexture("../assets/texture/dRook.png");
-    G_tex.dQueen  = LoadTexture("../assets/texture/dQueen.png");
-    G_tex.dKing   = LoadTexture("../assets/texture/dKing.png");
+    G_tex.dPawn   = ::LoadTexture("../assets/texture/dPawn.png");
+    G_tex.dKnight = ::LoadTexture("../assets/texture/dKnight.png");
+    G_tex.dBishop = ::LoadTexture("../assets/texture/dBishop.png");
+    G_tex.dRook   = ::LoadTexture("../assets/texture/dRook.png");
+    G_tex.dQueen  = ::LoadTexture("../assets/texture/dQueen.png");
+    G_tex.dKing   = ::LoadTexture("../assets/texture/dKing.png");
 
     G_tex_init = true;
 }
 
-void Render::renderBoard(const Window::Section &area, const Chess::Board& board) {
+void Render::renderBoard(const Window::Section &area, const Chess::Board& board, const Visual &visual) {
 
     if (!G_tex_init) _initTexture();
-
-    DrawRectangle(area.x, area.y, area.width, area.height, BROWN);
 
     for (int rank = 0; rank < Chess::MAX_RANK; rank++) {
 
         for (int file = 0; file < Chess::MAX_FILE; file++) {
 
-            Color squareColor = ((rank + file) % 2 == 0) ? RAYWHITE : DARKBROWN;
+            int x = area.x + file * Window::SQUARE_DIM;
+            int y = area.y + rank * Window::SQUARE_DIM;
 
-            int x = area.x + file * Window::TEXTURE_SIZE;
-            int y = area.y + (7 - rank) * Window::TEXTURE_SIZE;
+            // TODO(Tejas): Modify for themes
+            // TODO(Tejas): Add Flip Board
 
-            DrawRectangle(x, y, Window::TEXTURE_SIZE, Window::TEXTURE_SIZE, squareColor);
+            { // NOTE(Tejas): Rendering the Square Background
+                ::Color square_color = ((rank + file) % 2 == 0) ? RAYWHITE : DARKBROWN; 
+                ::DrawRectangle(x, y, Window::SQUARE_DIM, Window::SQUARE_DIM, square_color);
+            }
 
             Chess::Square sq(rank, file);
+
+            { // NOTE(Tejas): Rendering the Hightlighted Square
+                if (sq == visual.sel_square) {
+                    std::cout << "h\n";
+                    ::DrawRectangle(x, y, Window::SQUARE_DIM, Window::SQUARE_DIM, ::Color(100, 100, 255, 255));
+                }
+            }
+
+            { // NOTE(Tejas): Rendering the Square Coordinate
+                ::Color text_color =  ((rank + file) % 2 == 0) ? DARKBROWN : RAYWHITE;
+                int xx = x + 5;
+                int yy = y + 5;
+                if (file == 0) {
+                    std::string ch = std::to_string(rank + 1);
+                    ::DrawText(ch.c_str(), xx, yy, 15, text_color);
+                }
+                if (rank == 7) {
+                    yy = y + Window::SQUARE_DIM - 15;
+                    char ch[2] = {(char)(file + 1 + 96), '\0'};
+                    ::DrawText(ch, xx, yy, 15, text_color);
+                }
+            }
+
             Chess::Piece p = board.getPieceAt(sq);
             if (p.isEmpty()) continue;
 
-            const Texture2D* tex = nullptr;
+            const ::Texture2D* tex = nullptr;
 
             if (p.color() == Chess::Piece::LIGHT) {
                 switch (p.type()) {
@@ -80,7 +106,7 @@ void Render::renderBoard(const Window::Section &area, const Chess::Board& board)
 
             if (tex) {
                 float scale = static_cast<float>(Window::TEXTURE_SIZE) / tex->width;
-                DrawTextureEx(*tex, Vector2{(float)x, (float)y}, 0.0f, scale, WHITE);
+                ::DrawTextureEx(*tex, Vector2{(float)x, (float)y}, 0.0f, scale, WHITE);
             }
         }
     }   
@@ -89,15 +115,15 @@ void Render::renderBoard(const Window::Section &area, const Chess::Board& board)
 void Render::renderMenu(const Window::Section &area) {
 
     Color menu_background = Color(0x44, 0x44, 0x44, 0x99);
-    DrawRectangleRec(area, menu_background);
+    ::DrawRectangleRec(area, menu_background);
 }
 
 void Render::renderInfo(const Window::Section &area) {
 
-    DrawRectangleRec(area, YELLOW);
+    ::DrawRectangleRec(area, ::Color(18, 18, 18, 255));
 }
 
 void Render::renderStatus(const Window::Section &area) {
 
-    DrawRectangleRec(area, GREEN);
+    ::DrawRectangleRec(area, ::Color(200, 200, 200, 255));
 }

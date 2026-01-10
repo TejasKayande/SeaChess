@@ -16,7 +16,7 @@ if not exist build (
 )
 
 pushd build 
-call cmake --build . --config Debug
+call cmake --build . --parallel --config Debug
 if errorlevel 1 (
     echo ERROR: build failed!
     popd

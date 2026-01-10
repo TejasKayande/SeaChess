@@ -18,10 +18,14 @@ namespace Chess {
 
     struct Square {
 
+        // NOTE(Tejas): For now lets hard code the board to be 8x8
         u8 index; 
 
-        constexpr Square() : index(0) {}
-        constexpr Square(int rank, int file) : index((rank << 3) | file) {}
+        constexpr static int INVALID = 64;
+
+        constexpr Square() : index(INVALID) {}
+        constexpr Square(u8 rank, u8 file)
+            : index((rank < 8 && file < 8) ? ((rank << 3) | file) : INVALID) {}
 
         constexpr u8 rank() const { return index >> 3; }
         constexpr u8 file() const { return (index & 7); }
@@ -29,9 +33,8 @@ namespace Chess {
         constexpr bool operator==(const Square &other) const { return (index == other.index); }
         constexpr bool operator!=(const Square &other) const { return (index != other.index); }
 
-        // NOTE(Tejas): For now lets hard code the board to be 8x8
-        constexpr bool isValid() const { return index < 64; }
-        // constexpr Square invalid() { return Square(255); }
+        constexpr bool isValid() const { return index < INVALID; }
+        constexpr static Square invalid() { return Square(INVALID, INVALID); }
     };
 
     struct Piece {
@@ -48,11 +51,12 @@ namespace Chess {
             KING     = 6,
         };
 
-        // NOTE(Tejas): Here the bit manipulation is easy when we have 0 and 1 as valid colors
+        // NOTE(Tejas): Here we dont need to check if the color is NO_COLOR
+        //              because we can just check that in Piece Type if the
+        //              Piece is not a valid Piece
         enum _Color : u8 {
             LIGHT    = 0,
             DARK     = 1,
-            NO_COLOR = 2
         };
 
         constexpr Piece() : code(0) {}
@@ -66,12 +70,14 @@ namespace Chess {
 
         constexpr bool operator==(const Piece& other) const { return code == other.code; }
         constexpr bool operator!=(const Piece& other) const { return code != other.code; }
+
+        constexpr static Piece nopiece() { return Piece(); }
     };
 
     using PType  = Piece::_Type;
     using PColor = Piece::_Color;
     using Player = PColor;
-
+    
     class Board {
 
     public:
@@ -93,6 +99,8 @@ namespace Chess {
         void changeTurn();
 
         void reset();
+
+        void move(Square from, Square to);
 
     private:
 

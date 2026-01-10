@@ -1,6 +1,8 @@
 #pragma once
 
 #include "base.hpp"
+#include "chess.hpp"
+
 #include <raylib.h>
 
 namespace Window {
@@ -16,10 +18,11 @@ namespace Window {
     };
 
     // NOTE(Tejas): In pixels
-    constexpr int TEXTURE_SIZE = 100;
-    constexpr int BOARD_SIZE   = TEXTURE_SIZE * 8;
+    constexpr int TEXTURE_SIZE = 70;
+    constexpr int SQUARE_DIM   = TEXTURE_SIZE; 
+    constexpr int BOARD_SIZE   = SQUARE_DIM * 8;
 
-    constexpr int INFORMATION_WIDTH = 300;
+    constexpr int INFORMATION_WIDTH = BOARD_SIZE / 2;
     constexpr int STATUS_HEIGHT     = 20;
 
     constexpr int WINDOW_WIDTH  = BOARD_SIZE + INFORMATION_WIDTH;
@@ -34,5 +37,11 @@ namespace Window {
     bool isOnMenu();
 
     SectionID getSectionID(int x, int y);
+
+    bool onBoard(int x, int y);
+    bool onStatus(int x, int y);
+    bool onInformation(int x, int y);
+
+    Chess::Square getSquare(int x, int y);
 
 } // namespace Window
