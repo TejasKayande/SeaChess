@@ -94,12 +94,17 @@ bool Window::onInformation(int x, int y) {
     return Window::getSectionID(x, y) == Window::SectionID::INFORMATION;
 }
 
-Chess::Square Window::getSquare(int x, int y) {
+Chess::Square Window::getSquare(int x, int y, bool is_board_flipped) {
 
     if (!Window::onBoard(x, y)) return Chess::Square();
 
     int rank = y / SQUARE_DIM;
     int file = x / SQUARE_DIM;
+
+    if (is_board_flipped) {
+        rank = (Chess::MAX_RANK - 1) - rank;
+        file = (Chess::MAX_FILE - 1) - file;
+    }
 
     return Chess::Square(rank, file);
 }

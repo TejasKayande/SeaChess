@@ -17,20 +17,25 @@ void updateGame() {
         int x = ::GetMouseX();
         int y = ::GetMouseY();
 
-        Chess::Square sq = Window::getSquare(x, y);
+        Chess::Square sq = Window::getSquare(x, y, G_visual.board_flipped);
 
         if (sq.isValid()) {
             Chess::Piece pc = G_board->getPieceAt(sq);
 
             // NOTE(Tejas): if no piece was selected
             if (!G_visual.sel_square.isValid()) {
+
                 if (!pc.isEmpty() && pc.isColor(G_board->getTurn())) {
+
                     G_visual.sel_square = sq;
                 }
             }
 
             // NOTE(Tejas): if a piece was already selected
             else {
+
+                Chess::Square f_sq(sq.rank(), sq.file());
+
                 G_board->move(G_visual.sel_square, sq);
                 G_visual.sel_square = Chess::Square::invalid();
                 G_board->changeTurn();
@@ -38,7 +43,7 @@ void updateGame() {
         }
     }
 
-    // NOTE(Tejas): Left Mouse Button
+    // NOTE(Tejas): Right Mouse Button
     if (::IsMouseButtonPressed(1)) {
         // G_board->changeTurn();
         G_visual.sel_square = Chess::Square::invalid();
@@ -58,13 +63,13 @@ void update() {
 }
 
 void render() {
-    
-    Render::renderBoard(Window::getBoardSection(), *G_board, G_visual);
-    Render::renderStatus(Window::getStatusSection());
-    Render::renderInfo(Window::getInformationSection());
 
     if (Window::isOnMenu()) {
         Render::renderMenu(Window::getMenuSection());
+    } else {
+        Render::renderBoard(Window::getBoardSection(), *G_board, G_visual);
+        Render::renderStatus(Window::getStatusSection());
+        Render::renderInfo(Window::getInformationSection());
     }
 }
 

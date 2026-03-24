@@ -42,6 +42,6 @@ namespace Window {
     bool onStatus(int x, int y);
     bool onInformation(int x, int y);
 
-    Chess::Square getSquare(int x, int y);
+    Chess::Square getSquare(int x, int y, bool is_board_flipped);
 
 } // namespace Window
