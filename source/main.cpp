@@ -2,72 +2,33 @@
 #include "window.hpp"
 #include "chess.hpp"
 #include "render.hpp"
+#include "game_state.hpp"
 
 #include <raylib.h>
 
-global Chess::Board   *G_board;
-global Render::Visual G_visual;
+/*
+TODO(Tejas):
+- [ ] Abstract Input like in Text-Editor project.
+- [ ] Create a Config/Setting file for constants.
+*/
 
-void updateMenu() {}
+void update(State::GameState *gs) {
 
-void updateGame() {
-
-    // NOTE(Tejas): Left Mouse Button
-    if (::IsMouseButtonPressed(0)) {
-        int x = ::GetMouseX();
-        int y = ::GetMouseY();
-
-        Chess::Square sq = Window::getSquare(x, y, G_visual.board_flipped);
-
-        if (sq.isValid()) {
-            Chess::Piece pc = G_board->getPieceAt(sq);
-
-            // NOTE(Tejas): if no piece was selected
-            if (!G_visual.sel_square.isValid()) {
-
-                if (!pc.isEmpty() && pc.isColor(G_board->getTurn())) {
-
-                    G_visual.sel_square = sq;
-                }
-            }
-
-            // NOTE(Tejas): if a piece was already selected
-            else {
-
-                Chess::Square f_sq(sq.rank(), sq.file());
-
-                G_board->move(G_visual.sel_square, sq);
-                G_visual.sel_square = Chess::Square::invalid();
-                G_board->changeTurn();
-            }
-        }
-    }
-
-    // NOTE(Tejas): Right Mouse Button
-    if (::IsMouseButtonPressed(1)) {
-        // G_board->changeTurn();
-        G_visual.sel_square = Chess::Square::invalid();
-    }
-}
-
-void update() {
-    
     if (::IsKeyPressed(KEY_X)) Window::toggleMenu();
-    if (::IsKeyPressed(KEY_F)) G_visual.board_flipped = !G_visual.board_flipped;
+    if (::IsKeyPressed(KEY_F)) gs->m_visual->is_board_flipped = !gs->m_visual->is_board_flipped;
 
     if (Window::isOnMenu()) {
-        updateMenu();   
     } else {
-        updateGame();   
+        gs->update();   
     }
 }
 
-void render() {
+void render(State::GameState *gs) {
 
     if (Window::isOnMenu()) {
         Render::renderMenu(Window::getMenuSection());
     } else {
-        Render::renderBoard(Window::getBoardSection(), *G_board, G_visual);
+        Render::renderBoard(Window::getBoardSection(), gs->m_board, gs->m_visual);
         Render::renderStatus(Window::getStatusSection());
         Render::renderInfo(Window::getInformationSection());
     }
@@ -76,22 +37,28 @@ void render() {
 auto main(void) -> int {
 
     ::InitWindow(Window::WINDOW_WIDTH, Window::WINDOW_HEIGHT, "Chess");
-    G_board = new Chess::Board();
+
+    State::GameState *gs = new State::GameState();
+
+    Render::initAssets();
 
     while (!::WindowShouldClose()) {
 
-        update();
+        update(gs);
 
         ::BeginDrawing();
         ::BeginBlendMode(BLEND_ALPHA);
         {
             ::ClearBackground(BLACK);
-            render();
+            render(gs);
         }
         ::EndDrawing();
     }
 
-    delete G_board;
+    Render::deinitAssets();
+
+    delete gs;
+
     ::CloseWindow();
 
     return 0;
