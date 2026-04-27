@@ -5,18 +5,39 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(dependencies/raylib)
+add_subdirectory(dependencies/googletest)
+enable_testing()
 
-file(GLOB_RECURSE SOURCES 
+add_library(chess_core
+    source/chess.cpp
+    source/move_generator.cpp
+)
+
+add_executable(${PROJECT_NAME}
     source/main.cpp
     source/window.cpp
-    source/chess.cpp
     source/render.cpp
     source/game_state.cpp
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+target_link_libraries(${PROJECT_NAME} PRIVATE chess_core raylib)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
+# NOTE(Tejas): Tests
+add_executable(Tests 
+    tests/test_main.cpp
+    tests/test_square.cpp
+    tests/test_piece.cpp
+    tests/test_board.cpp
+    tests/test_fen.cpp
+)
+
+target_link_libraries(Tests
+    PRIVATE chess_core
+    gtest
+    gtest_main
+)
+
+add_test(NAME ChessTests COMMAND Tests)
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
