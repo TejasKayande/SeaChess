@@ -22,11 +22,17 @@ namespace Window {
     constexpr int SQUARE_DIM   = TEXTURE_SIZE; 
     constexpr int BOARD_SIZE   = SQUARE_DIM * 8;
 
-    constexpr int INFORMATION_WIDTH  = BOARD_SIZE / 2;
-    constexpr int INFORMATION_HEIGHT = BOARD_SIZE + INFORMATION_WIDTH;
+    // constexpr int INFORMATION_WIDTH  = BOARD_SIZE / 2;
+    // constexpr int INFORMATION_HEIGHT = BOARD_SIZE + INFORMATION_WIDTH;
 
-    constexpr int STATUS_WIDTH  = BOARD_SIZE;
-    constexpr int STATUS_HEIGHT = 20;
+    // constexpr int STATUS_WIDTH  = BOARD_SIZE;
+    // constexpr int STATUS_HEIGHT = 20;
+
+    constexpr int INFORMATION_WIDTH  = 0;
+    constexpr int INFORMATION_HEIGHT = 0;
+
+    constexpr int STATUS_WIDTH  = 0;
+    constexpr int STATUS_HEIGHT = 0;
 
     constexpr int WINDOW_WIDTH  = BOARD_SIZE + INFORMATION_WIDTH;
     constexpr int WINDOW_HEIGHT = BOARD_SIZE + STATUS_HEIGHT;

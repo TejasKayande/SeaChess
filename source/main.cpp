@@ -12,28 +12,6 @@ TODO(Tejas):
 - [ ] Create a Config/Setting file for constants.
 */
 
-void update(State::GameState *gs) {
-
-    if (::IsKeyPressed(KEY_X)) Window::toggleMenu();
-    if (::IsKeyPressed(KEY_F)) gs->m_visual->is_board_flipped = !gs->m_visual->is_board_flipped;
-
-    if (Window::isOnMenu()) {
-    } else {
-        gs->update();   
-    }
-}
-
-void render(State::GameState *gs) {
-
-    if (Window::isOnMenu()) {
-        Render::renderMenu(Window::getMenuSection());
-    } else {
-        Render::renderBoard(Window::getBoardSection(), gs->m_board, gs->m_visual);
-        Render::renderStatus(Window::getStatusSection());
-        Render::renderInfo(Window::getInformationSection());
-    }
-}
-
 auto main(void) -> int {
 
     ::InitWindow(Window::WINDOW_WIDTH, Window::WINDOW_HEIGHT, "Chess");
@@ -44,13 +22,13 @@ auto main(void) -> int {
 
     while (!::WindowShouldClose()) {
 
-        update(gs);
+        gs->update();
 
         ::BeginDrawing();
         ::BeginBlendMode(BLEND_ALPHA);
         {
             ::ClearBackground(BLACK);
-            render(gs);
+            gs->render();
         }
         ::EndDrawing();
     }

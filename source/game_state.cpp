@@ -17,10 +17,12 @@ GameState::~GameState() {
 
 void GameState::update() {
 
-    if (::IsKeyPressed(KEY_F))
-        m_visual->is_board_flipped = !m_visual->is_board_flipped;
+    // TODO(Tejas): Seperate updation for Menu game Game, and perhaps the Status and
+    //              Information sections as well
 
-    
+    if (::IsKeyPressed(KEY_X)) Window::toggleMenu();
+    if (::IsKeyPressed(KEY_F)) m_visual->is_board_flipped = !m_visual->is_board_flipped;
+
     if (::IsMouseButtonPressed(0)) {
 
         int x = ::GetMouseX();
@@ -56,5 +58,16 @@ void GameState::update() {
     // NOTE(Tejas): Right Mouse Button
     if (::IsMouseButtonPressed(1)) {
         m_visual->selected_square = Chess::Square::invalid();
+    }
+}
+
+void GameState::render() {
+
+    if (Window::isOnMenu()) {
+        Render::renderMenu(Window::getMenuSection());
+    } else {
+        Render::renderBoard(Window::getBoardSection(), m_board, m_visual);
+        Render::renderStatus(Window::getStatusSection());
+        Render::renderInfo(Window::getInformationSection());
     }
 }

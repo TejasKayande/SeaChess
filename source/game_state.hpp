@@ -15,9 +15,9 @@ namespace State {
         ~GameState();
 
         void update();
+        void render();
 
-    public:
-        // TODO(Tejas): Do we want to make this private??
+    private:
         Chess::Board   *m_board;
         Render::Visual *m_visual;
     };

@@ -11,6 +11,7 @@ file(GLOB_RECURSE SOURCES
     source/window.cpp
     source/chess.cpp
     source/render.cpp
+    source/game_state.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
