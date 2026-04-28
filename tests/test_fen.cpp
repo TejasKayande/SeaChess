@@ -8,15 +8,14 @@
 
 using namespace Chess;
 
-
 TEST(FenTest, EmptyBoard) {
     Board b;
 
     b.setFen("8/8/8/8/8/8/8/8 w");
 
-    for (int r = 0; r < 8; ++r) {
-        for (int f = 0; f < 8; ++f) {
-            EXPECT_TRUE(b.getPieceAt(Square(r, f)).isEmpty());
+    for (int rank = 0; rank < 8; ++rank) {
+        for (int file = 0; file < 8; ++file) {
+            EXPECT_TRUE(b.getPieceAt(Square(rank, file)).isEmpty());
         }
     }
 
@@ -99,6 +98,10 @@ TEST(FenTest, IgnoresInvalidCharacters) {
 
     b.setFen("8/8/8/8/8/8/8/X7 w");
 
-    // X should be ignored → square empty
-    EXPECT_TRUE(b.getPieceAt(Square(0, 0)).isEmpty());
+    // X should be ignored square empty
+    for (int rank = 0; rank < 8; ++rank) {
+        for (int file = 0; file < 8; ++file) {
+            EXPECT_TRUE(b.getPieceAt(Square(rank, file)).isEmpty());
+        }
+    }
 }

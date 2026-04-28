@@ -3,6 +3,7 @@
 #include "chess.hpp"
 #include "render.hpp"
 #include "game_state.hpp"
+#include "movegen.hpp"
 
 #include <raylib.h>
 
@@ -18,8 +19,6 @@ auto main(void) -> int {
 
     State::GameState *gs = new State::GameState();
 
-    Render::initAssets();
-
     while (!::WindowShouldClose()) {
 
         gs->update();
@@ -32,8 +31,6 @@ auto main(void) -> int {
         }
         ::EndDrawing();
     }
-
-    Render::deinitAssets();
 
     delete gs;
 

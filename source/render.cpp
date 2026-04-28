@@ -1,11 +1,12 @@
 
 #include "render.hpp"
+#include "movegen.hpp"
 
 using namespace Render;
 
-// NOTE(Tejas): since I only have one type of texuture that will last for the
-//              life of the application, Im not going to worry about UnLoading
-//              the texture for now.
+// TODO(Tejas):
+// - [ ] Refactor renderer to use Base::Color on the API.
+
 struct _Assets {
     ::Texture2D lPawn, lKnight, lBishop, lRook, lQueen, lKing;
     ::Texture2D dPawn, dKnight, dBishop, dRook, dQueen, dKing;
@@ -26,7 +27,8 @@ internal void renderSquareBackgroud(const Window::Section &area, Chess::Square s
     ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, square_color);
 }
 
-internal void renderSquareHighlight(const Window::Section &area, Chess::Square sq, bool is_flipped) {
+internal void renderSquareHighlight(const Window::Section &area, Chess::Square sq, 
+                                    bool is_flipped, ::Color color = ::Color(100, 100, 255, 255)) {
 
     if (!sq.isValid()) return;
 
@@ -41,7 +43,7 @@ internal void renderSquareHighlight(const Window::Section &area, Chess::Square s
     int px = area.x + file * Window::SQUARE_DIM;
     int py = area.y + rank * Window::SQUARE_DIM;
     
-    ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, ::Color(100, 100, 255, 255));
+    ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, color);
 }
 
 internal void renderSquareCoord(const Window::Section &area, Chess::Square sq, bool is_flipped) {
@@ -114,6 +116,56 @@ internal void renderPieceOnSquare(const Window::Section &area, const Chess::Squa
     if (tex) ::DrawTexture(*tex, px, py, WHITE);
 }
 
+internal void renderLegal(const Window::Section &area, const Chess::Board *board, const Visual *visual) {
+
+    // temp...
+    BitBoard legal_moves = 0;
+
+    if (visual->selected_square.isValid()) {
+
+        Chess::Piece pc = board->getPieceAt(visual->selected_square);
+
+        if (!pc.isEmpty()) {
+
+            switch (pc.type()) {
+
+            case Chess::Piece::PAWN: {
+                legal_moves = MoveGen::Attack::pawnAttacks(visual->selected_square, pc.color());                
+            } break;
+
+            case Chess::Piece::KNIGHT: {
+                legal_moves = MoveGen::Attack::knightAttacks(visual->selected_square);                
+            } break;
+
+            case Chess::Piece::KING: {
+                legal_moves = MoveGen::Attack::kingAttacks(visual->selected_square);                
+            } break;
+
+            case Chess::Piece::BISHOP: {
+                legal_moves = MoveGen::Attack::bishopAttacks(visual->selected_square, board->getOccupied());                
+            } break;
+
+
+            case Chess::Piece::ROOK: {
+                legal_moves = MoveGen::Attack::rookAttacks(visual->selected_square, board->getOccupied());                
+            } break;
+
+            case Chess::Piece::QUEEN: {
+                legal_moves = MoveGen::Attack::queenAttacks(visual->selected_square, board->getOccupied());                
+            } break;
+
+            }
+        }
+    }
+
+    for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
+
+        if ((legal_moves & (1ULL << sq_idx)) != 0) {
+            Chess::Square to = GET_SQUARE_FROM_INDEX(sq_idx);
+            renderSquareHighlight(area, to, visual->is_board_flipped, ::Color(255, 100, 255, 200));
+        }
+    }
+}
 
 void Render::initAssets() {
     
@@ -158,8 +210,6 @@ void Render::deinitAssets() {
 
 void Render::renderBoard(const Window::Section &area, const Chess::Board *board, const Visual *visual) {
 
-    // if (!G_assets_loaded) _initAssets();
-
     // FIXME(Tejas): Combine these 2 loops...
 
     for (int rank = 0; rank < Chess::MAX_RANK; rank++) {
@@ -191,12 +241,15 @@ void Render::renderBoard(const Window::Section &area, const Chess::Board *board,
             Chess::Piece pc  = board->getPieceAt(sq);
             renderPieceOnSquare(area, sq, pc, visual->is_board_flipped);
         }
-    }   
+    }
+
+    // TODO(Tejas): Remove this...
+    renderLegal(area, board, visual);
 }
 
 void Render::renderMenu(const Window::Section &area) {
 
-    Color menu_background = Color(0x44, 0x44, 0x44, 0x99);
+    ::Color menu_background = ::Color(0x44, 0x44, 0x44, 0x99);
     Window::Section menu_section = Window::getMenuSection();
     ::DrawTextEx(G_assets.inter_regular_50, "Menu",
                  Vector2{ (float)menu_section.width / 2 - 50, (float)50 },

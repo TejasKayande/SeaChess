@@ -6,7 +6,7 @@ using BitBoard = u64;
 #define U64(x) (x##ULL)
 
 #define GET_INDEX_FROM_SQUARE(rank, file) (((rank) << 3) | (file))
-#define GET_SQUARE_FROM_INDEX(idx) Square((idx) >> 3, (idx) & 7)
+#define GET_SQUARE_FROM_INDEX(idx) Chess::Square((idx) >> 3, (idx) & 7)
 
 namespace Chess {
 
@@ -101,6 +101,8 @@ namespace Chess {
         void reset();
 
         void move(Square from, Square to);
+
+        BitBoard getOccupied() const;
 
     private:
 

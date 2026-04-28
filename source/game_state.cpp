@@ -5,11 +5,16 @@ using namespace State;
 
 GameState::GameState() {
 
-    m_board = new Chess::Board();
+    m_board  = new Chess::Board();
     m_visual = new Render::Visual;
+
+    Render::initAssets();
+    MoveGen::init();
 }
 
 GameState::~GameState() {
+
+    Render::deinitAssets();
 
     delete m_board;
     delete m_visual;

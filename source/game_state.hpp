@@ -4,6 +4,7 @@
 #include "window.hpp"
 #include "chess.hpp"
 #include "render.hpp"
+#include "movegen.hpp"
 
 namespace State {
 

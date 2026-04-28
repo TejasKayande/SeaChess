@@ -248,3 +248,8 @@ void Board::move(Square from, Square to) {
     setPieceAt(from, Piece::nopiece());
     setPieceAt(to, pc);
 }
+
+BitBoard Board::getOccupied() const {
+
+    return _lOccupied | _dOccupied;
+}
