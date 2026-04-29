@@ -38,4 +38,14 @@ namespace Base {
 #define persist  static 
 #define internal static 
 
+#define U64(x) (x##ULL)
+
+// TODO(Tejas): I dont know how this works, look into it later...
+inline int popLSB(u64& bb) {
+    unsigned long idx;
+    _BitScanForward64(&idx, bb);
+    bb &= bb - 1;
+    return static_cast<int>(idx);
+}
+
 #endif // BASE_H

@@ -51,11 +51,33 @@ void GameState::update() {
             // NOTE(Tejas): if a piece was already selected
             else {
 
-                Chess::Square f_sq(sq.rank(), sq.file());
+                MoveGen::MoveList moveList;
+                MoveGen::PseudoLegal::generateAllMoves(m_board, moveList);
 
-                m_board->move(m_visual->selected_square, sq);
-                m_visual->selected_square = Chess::Square::invalid();
-                m_board->changeTurn();
+                bool valid = false;
+                MoveGen::Move chosenMove;
+
+                for (const auto& move : moveList) {
+                    if (move.from == m_visual->selected_square &&
+                        move.to   == sq) {
+                        
+                        chosenMove = move;
+                        valid = true;
+                        break;
+                    }
+                }
+                
+                if (valid) {
+                    m_board->move(m_visual->selected_square, sq);
+                    m_visual->selected_square = Chess::Square::invalid();
+                    m_board->changeTurn();
+                }
+
+                if (m_board->getPieceAt(m_visual->selected_square).type() == Chess::Piece::PAWN) {
+                    m_board->move(m_visual->selected_square, sq);
+                    m_visual->selected_square = Chess::Square::invalid();
+                    m_board->changeTurn();
+                }
             }
         }
     }

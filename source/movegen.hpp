@@ -2,37 +2,50 @@
 
 #include "base.hpp"
 #include "chess.hpp"
+#include <vector>
+
+// TODO(Tejas):
+// - [ ] Seperate Attack, Pseudo-Legal and Legal move into seperate files.
 
 namespace MoveGen {
 
-    // struct Move {
+    struct Move {
 
-    //     Chess::Square from;
-    //     Chess::Square to;
+        Chess::Square from;
+        Chess::Square to;
 
-    //     Chess::Piece moved;
-    //     Chess::Piece captured;
+        // TODO(Tejas): if the move was castle then we need to know what type of
+        //              castle it was...
+        enum _MoveType : u8 {
 
-    //     // TODO(Tejas): if the move was castle then we need to know what type of
-    //     //              castle it was...
-    //     enum _MoveFlag : u8 {
-    //         QUIET      = 0,
-    //         CAPTURE    = 1 << 0,
-    //         PROMOTION  = 1 << 1,
-    //         EN_PASSANT = 1 << 2,
-    //         CASTLE     = 1 << 3
-    //     };
-    //     u8 flag;
+            QUIET,
+            CAPTURE,
 
-    //     // TODO(Tejas): Work in progress...
-    //     union {
-    //         Chess::Piece  promoteTo;       // only used if the move is a promotion
-    //         Chess::Square castleRookFrom, castleRookTo; // only used if the move is a castle
-    //         Chess::Square enPassantCaptureSquare; // only used if the move is an en passant capture
-    //     };
-    // };
+            DOUBLE_PAWN_PUSH,
 
-    // using MFlag = Move::_MoveFlag;
+            EN_PASSANT,
+
+            PROMO_KNIGHT,
+            PROMO_BISHOP,
+            PROMO_ROOK,
+            PROMO_QUEEN,
+
+            PROMO_CAPTURE_KNIGHT,
+            PROMO_CAPTURE_BISHOP,
+            PROMO_CAPTURE_ROOK,
+            PROMO_CAPTURE_QUEEN,
+
+            KING_CASTLE,
+            QUEEN_CASTLE,
+        } type;
+    };
+
+    using MoveType = Move::_MoveType;
+
+    // TODO(Tejas): Replace this with a custom MoveList, for we know that in any
+    //              given position there can be at most 218 legal moves.
+    //              So we dont really need a dynamic overhead of std::vector for this.
+    using MoveList = std::vector<Move>;
 
     void init();
 
@@ -47,5 +60,17 @@ namespace MoveGen {
         BitBoard queenAttacks(Chess::Square sq, BitBoard occ);
         BitBoard kingAttacks(Chess::Square sq);
     }
+
+    namespace PseudoLegal {
+
+        void generateAllMoves(const Chess::Board *board, MoveList &moveList);
+
+        void generatePawnMoves(const Chess::Board *board, MoveList &moveList);
+        void generateKnightMoves(const Chess::Board *board, MoveList &moveList);
+        void generateBishopMoves(const Chess::Board *board, MoveList &moveList);
+        void generateRookMoves(const Chess::Board *board, MoveList &moveList);
+        void generateQueenMoves(const Chess::Board *board, MoveList &moveList);
+        void generateKingMoves(const Chess::Board *board, MoveList &moveList);
+    }
     
-} // namespace MoveGenerator
+} // namespace MoveGen

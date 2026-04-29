@@ -253,3 +253,21 @@ BitBoard Board::getOccupied() const {
 
     return _lOccupied | _dOccupied;
 }
+
+BitBoard Board::getOccupied(Player p) const {
+
+    return (p == Player::LIGHT) ? _lOccupied : _dOccupied;
+}
+
+BitBoard Board::getPiecesOfType(PType type, Player p) const {
+
+    switch (type) {
+        case PType::PAWN:   return (p == Player::LIGHT) ? _lPawn : _dPawn;
+        case PType::KNIGHT: return (p == Player::LIGHT) ? _lKnight : _dKnight;
+        case PType::BISHOP: return (p == Player::LIGHT) ? _lBishop : _dBishop;
+        case PType::ROOK:   return (p == Player::LIGHT) ? _lRook : _dRook;
+        case PType::QUEEN:  return (p == Player::LIGHT) ? _lQueen : _dQueen;
+        case PType::KING:   return (p == Player::LIGHT) ? _lKing : _dKing;
+        default: return 0;
+    }
+}

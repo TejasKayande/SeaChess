@@ -3,8 +3,8 @@
 #include "base.hpp"
 
 using BitBoard = u64;
-#define U64(x) (x##ULL)
 
+// TODO(Tejas): maybe change these to functions instead of macros?
 #define GET_INDEX_FROM_SQUARE(rank, file) (((rank) << 3) | (file))
 #define GET_SQUARE_FROM_INDEX(idx) Chess::Square((idx) >> 3, (idx) & 7)
 
@@ -24,6 +24,7 @@ namespace Chess {
         constexpr static int INVALID = 64;
 
         constexpr Square() : index(INVALID) {}
+        constexpr Square(u8 idx) : index((idx < 64) ? idx : INVALID) {}
         constexpr Square(u8 rank, u8 file)
             : index((rank < 8 && file < 8) ? ((rank << 3) | file) : INVALID) {}
 
@@ -103,6 +104,9 @@ namespace Chess {
         void move(Square from, Square to);
 
         BitBoard getOccupied() const;
+        BitBoard getOccupied(Player p) const;
+
+        BitBoard getPiecesOfType(PType type, Player p) const;
 
     private:
 

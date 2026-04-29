@@ -11,6 +11,7 @@
 TODO(Tejas):
 - [ ] Abstract Input like in Text-Editor project.
 - [ ] Create a Config/Setting file for constants.
+- [ ] Abstract Chess Core into seperate module.
 */
 
 auto main(void) -> int {
