@@ -157,6 +157,28 @@ void Render::deinitAssets() {
     ::UnloadFont(G_assets.inter_regular_50);
 }
 
+internal void renderLegalMoves(const Window::Section &area, const Chess::Board *board, const Visual *visual) {
+// TODO(Tejas): for testing purposes, remove this later
+
+    if (!visual->selected_square.isValid()) return;
+
+    MoveGen::MoveList move_list;
+    MoveGen::PseudoLegal::generateMovesForSquare(board, visual->selected_square, move_list);
+    BitBoard legal_moves_bb = MoveGen::PseudoLegal::convertMoveListToBitBoard(move_list);
+
+    for (int rank = 0; rank < Chess::MAX_RANK; rank++) {
+
+        for (int file = 0; file < Chess::MAX_FILE; file++) {
+
+            Chess::Square sq(rank, file);
+
+            if (sq.isSquareOnBitBoard(legal_moves_bb)) {
+                renderSquareHighlight(area, sq, visual->is_board_flipped, ::Color(255, 0, 255, 200));
+            }
+        }
+    }
+}
+
 void Render::renderBoard(const Window::Section &area, const Chess::Board *board, const Visual *visual) {
 
     // FIXME(Tejas): Combine these 2 loops...
@@ -191,6 +213,9 @@ void Render::renderBoard(const Window::Section &area, const Chess::Board *board,
             renderPieceOnSquare(area, sq, pc, visual->is_board_flipped);
         }
     }
+
+    // TODO(Tejas): for testing purposes, remove this later
+    renderLegalMoves(area, board, visual);
 }
 
 void Render::renderMenu(const Window::Section &area) {

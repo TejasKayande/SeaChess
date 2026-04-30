@@ -64,13 +64,26 @@ namespace MoveGen {
     namespace PseudoLegal {
 
         void generateAllMoves(const Chess::Board *board, MoveList &move_list);
+        void generateMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
 
+        // NOTE(Tejas): generate moves for all the pieces on the board of that type.
         void generatePawnMoves(const Chess::Board *board, MoveList &move_list);
         void generateKnightMoves(const Chess::Board *board, MoveList &move_list);
         void generateBishopMoves(const Chess::Board *board, MoveList &move_list);
         void generateRookMoves(const Chess::Board *board, MoveList &move_list);
         void generateQueenMoves(const Chess::Board *board, MoveList &move_list);
         void generateKingMoves(const Chess::Board *board, MoveList &move_list);
+
+        // NOTE(Tejas): generate moves for a piece on a specific square.
+        void generatePawnMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
+        void generateKnightMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
+        void generateBishopMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
+        void generateRookMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
+        void generateQueenMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
+
+        // NOTE(Tejas): since we only have one king, we dont need to pass the square for king move generation.
+
+        BitBoard convertMoveListToBitBoard(const MoveList &move_list);
     }
     
 } // namespace MoveGen

@@ -52,20 +52,17 @@ void GameState::update() {
             else {
 
                 MoveGen::MoveList move_list;
-                MoveGen::PseudoLegal::generateAllMoves(m_board, move_list);
+                MoveGen::PseudoLegal::generateMovesForSquare(m_board, m_visual->selected_square, move_list);
 
                 bool valid = false;
                 for (const auto& move : move_list) {
-                    if (move.from == m_visual->selected_square && move.to == sq) {
+                    if (move.to == sq) {
                         valid = true;
+                        m_board->move(m_visual->selected_square, sq);
+                        m_visual->selected_square = Chess::Square::invalid();
+                        m_board->changeTurn();
                         break;
                     }
-                }
-                
-                if (valid) {
-                    m_board->move(m_visual->selected_square, sq);
-                    m_visual->selected_square = Chess::Square::invalid();
-                    m_board->changeTurn();
                 }
             }
         }

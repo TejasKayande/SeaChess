@@ -34,6 +34,8 @@ namespace Chess {
         constexpr bool operator==(const Square &other) const { return (index == other.index); }
         constexpr bool operator!=(const Square &other) const { return (index != other.index); }
 
+        constexpr bool isSquareOnBitBoard(BitBoard bb)  const { return (bb & (1ULL << index)) != 0; }
+
         constexpr bool isValid() const { return index < INVALID; }
         constexpr static Square invalid() { return Square(INVALID, INVALID); }
     };
