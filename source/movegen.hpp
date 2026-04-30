@@ -63,14 +63,14 @@ namespace MoveGen {
 
     namespace PseudoLegal {
 
-        void generateAllMoves(const Chess::Board *board, MoveList &moveList);
+        void generateAllMoves(const Chess::Board *board, MoveList &move_list);
 
-        void generatePawnMoves(const Chess::Board *board, MoveList &moveList);
-        void generateKnightMoves(const Chess::Board *board, MoveList &moveList);
-        void generateBishopMoves(const Chess::Board *board, MoveList &moveList);
-        void generateRookMoves(const Chess::Board *board, MoveList &moveList);
-        void generateQueenMoves(const Chess::Board *board, MoveList &moveList);
-        void generateKingMoves(const Chess::Board *board, MoveList &moveList);
+        void generatePawnMoves(const Chess::Board *board, MoveList &move_list);
+        void generateKnightMoves(const Chess::Board *board, MoveList &move_list);
+        void generateBishopMoves(const Chess::Board *board, MoveList &move_list);
+        void generateRookMoves(const Chess::Board *board, MoveList &move_list);
+        void generateQueenMoves(const Chess::Board *board, MoveList &move_list);
+        void generateKingMoves(const Chess::Board *board, MoveList &move_list);
     }
     
 } // namespace MoveGen

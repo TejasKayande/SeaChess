@@ -7,8 +7,6 @@ internal BitBoard PAWN_ATTACKS[Chess::COLOR_COUNT][64];
 internal BitBoard KNIGHT_ATTACKS[64];
 internal BitBoard KING_ATTACKS[64];
 
-// NOTE(Tejas):
-
 void MoveGen::init() {
 
     Attack::initAttackTables();
@@ -16,9 +14,9 @@ void MoveGen::init() {
 
 void Attack::initAttackTables() {
 
-    for (int sqIdx = 0; sqIdx < 64; sqIdx++) {
+    for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
 
-        Chess::Square sq = GET_SQUARE_FROM_INDEX(sqIdx);
+        Chess::Square sq = GET_SQUARE_FROM_INDEX(sq_idx);
 
         int rank = sq.rank();
         int file = sq.file();
@@ -41,7 +39,7 @@ void Attack::initAttackTables() {
                 }
             }
 
-            KNIGHT_ATTACKS[sqIdx] = mask;
+            KNIGHT_ATTACKS[sq_idx] = mask;
         }
 
         // NOTE(Tejas): King Attaks
@@ -62,7 +60,7 @@ void Attack::initAttackTables() {
                 }
             }
 
-            KING_ATTACKS[sqIdx] = mask;
+            KING_ATTACKS[sq_idx] = mask;
         }
 
         // NOTE(Tejas): Light Pawn Attacks
@@ -84,7 +82,7 @@ void Attack::initAttackTables() {
                 }
             }
 
-            PAWN_ATTACKS[Chess::Player::LIGHT][sqIdx] = mask;
+            PAWN_ATTACKS[Chess::Player::LIGHT][sq_idx] = mask;
         }
 
         // NOTE(Tejas): Dark Pawn Attacks
@@ -106,7 +104,7 @@ void Attack::initAttackTables() {
                 }
             }
 
-            PAWN_ATTACKS[Chess::Player::DARK][sqIdx] = mask;
+            PAWN_ATTACKS[Chess::Player::DARK][sq_idx] = mask;
         }
     }
 }
@@ -215,21 +213,66 @@ BitBoard Attack::kingAttacks(Chess::Square sq) {
     return KING_ATTACKS[sq.index];
 }
 
-void PseudoLegal::generateAllMoves(const Chess::Board *board, MoveList &moveList) {
+void PseudoLegal::generateAllMoves(const Chess::Board *board, MoveList &move_list) {
 
-    generatePawnMoves(board, moveList);
-    generateKnightMoves(board, moveList);
-    generateBishopMoves(board, moveList);
-    generateRookMoves(board, moveList);
-    generateQueenMoves(board, moveList);
-    generateKingMoves(board, moveList);
+    generatePawnMoves(board, move_list);
+    generateKnightMoves(board, move_list);
+    generateBishopMoves(board, move_list);
+    generateRookMoves(board, move_list);
+    generateQueenMoves(board, move_list);
+    generateKingMoves(board, move_list);
 }
 
-void PseudoLegal::generatePawnMoves(const Chess::Board *board, MoveList &moveList) {
+void PseudoLegal::generatePawnMoves(const Chess::Board *board, MoveList &move_list) {
 
+    Chess::Player side  = board->getTurn();
+    Chess::Player enemy = (side == Chess::Player::LIGHT) ? Chess::Player::DARK : Chess::Player::LIGHT;
+
+    BitBoard pawns      = board->getPiecesOfType(Chess::Piece::PAWN, side);
+
+    BitBoard friendly_occ = board->getOccupied(side);
+    BitBoard enemy_occ    = board->getOccupied(enemy);
+    BitBoard all_occ      = friendly_occ | enemy_occ;
+
+    int dir = (side == Chess::Player::LIGHT) ? +8 : -8;
+
+    while (pawns) {
+
+        int from_idx = Base::popLSB(pawns);
+        Chess::Square from(from_idx);
+
+        int rank = from.rank();
+
+        int to_idx = from_idx + dir;
+
+        if (to_idx >= 0 && to_idx < 64 && !(all_occ & (1ULL << to_idx))) {
+            Chess::Square to(to_idx);
+
+            move_list.push_back({from, to, Move::QUIET});
+
+            // NOTE(Tejas): Double Push
+            bool is_start_rank = (side == Chess::Player::LIGHT) ? (rank == 1) : (rank == 6);
+            int to_idx2 = from_idx + 2 * dir;
+
+            if (is_start_rank && !(all_occ & (1ULL << to_idx))) {
+                move_list.push_back({from, Chess::Square(to_idx2), Move::DOUBLE_PAWN_PUSH});
+            }
+        }
+
+        // NOTE(Tejas): Captures
+        BitBoard attacks = Attack::pawnAttacks(from, side);
+        BitBoard targets = attacks & enemy_occ;
+
+        while (targets) {
+            int to_idx = Base::popLSB(targets);
+            Chess::Square to(to_idx);
+
+            move_list.push_back({from, to, Move::CAPTURE});
+        }
+    }
 }
 
-void PseudoLegal::generateKnightMoves(const Chess::Board *board, MoveList &moveList) {
+void PseudoLegal::generateKnightMoves(const Chess::Board *board, MoveList &move_list) {
 
     // TODO(Tejas): should we use Turn or Pass Player explicitly here?..
 
@@ -238,33 +281,33 @@ void PseudoLegal::generateKnightMoves(const Chess::Board *board, MoveList &moveL
 
     BitBoard knights = board->getPiecesOfType(Chess::Piece::KNIGHT, side);
 
-    BitBoard friendlyOcc = board->getOccupied(side);
-    BitBoard enemyOcc    = board->getOccupied(enemy);
+    BitBoard friendly_occ = board->getOccupied(side);
+    BitBoard enemy_occ    = board->getOccupied(enemy);
 
     while (knights) {
 
-        int fromIdx = popLSB(knights);
+        int from_idx = Base::popLSB(knights);
 
-        Chess::Square from(fromIdx);
+        Chess::Square from(from_idx);
 
-        BitBoard attacks = Attack::knightAttacks(fromIdx);
-        BitBoard targets = attacks & ~friendlyOcc;
+        BitBoard attacks = Attack::knightAttacks(from_idx);
+        BitBoard targets = attacks & ~friendly_occ;
 
         while (targets) {
 
-            int toIdx = popLSB(targets);
-            Chess::Square to(toIdx);
+            int to_idx = Base::popLSB(targets);
+            Chess::Square to(to_idx);
 
-            if (enemyOcc & (1ULL << toIdx)) {
-                moveList.push_back({from, to, Move::CAPTURE});
+            if (enemy_occ & (1ULL << to_idx)) {
+                move_list.push_back({from, to, Move::CAPTURE});
             } else {
-                moveList.push_back({from, to, Move::QUIET});
+                move_list.push_back({from, to, Move::QUIET});
             }
         }
     }
 }
 
-void PseudoLegal::generateBishopMoves(const Chess::Board *board, MoveList &moveList) {
+void PseudoLegal::generateBishopMoves(const Chess::Board *board, MoveList &move_list) {
 
     // TODO(Tejas): should we use Turn or Pass Player explicitly here?..
 
@@ -273,33 +316,33 @@ void PseudoLegal::generateBishopMoves(const Chess::Board *board, MoveList &moveL
 
     BitBoard bishops = board->getPiecesOfType(Chess::Piece::BISHOP, side);
 
-    BitBoard friendlyOcc = board->getOccupied(side);
-    BitBoard enemyOcc    = board->getOccupied(enemy);
+    BitBoard friendly_occ = board->getOccupied(side);
+    BitBoard enemy_occ    = board->getOccupied(enemy);
 
     while (bishops) {
 
-        int fromIdx = popLSB(bishops);
+        int from_idx = Base::popLSB(bishops);
 
-        Chess::Square from(fromIdx);
+        Chess::Square from(from_idx);
 
-        BitBoard attacks = Attack::bishopAttacks(fromIdx, friendlyOcc | enemyOcc);
-        BitBoard targets = attacks & ~friendlyOcc;
+        BitBoard attacks = Attack::bishopAttacks(from_idx, friendly_occ | enemy_occ);
+        BitBoard targets = attacks & ~friendly_occ;
 
         while (targets) {
 
-            int toIdx = popLSB(targets);
-            Chess::Square to(toIdx);
+            int to_idx = Base::popLSB(targets);
+            Chess::Square to(to_idx);
 
-            if (enemyOcc & (1ULL << toIdx)) {
-                moveList.push_back({from, to, Move::CAPTURE});
+            if (enemy_occ & (1ULL << to_idx)) {
+                move_list.push_back({from, to, Move::CAPTURE});
             } else {
-                moveList.push_back({from, to, Move::QUIET});
+                move_list.push_back({from, to, Move::QUIET});
             }
         }
     }
 }
 
-void PseudoLegal::generateRookMoves(const Chess::Board *board, MoveList &moveList) {
+void PseudoLegal::generateRookMoves(const Chess::Board *board, MoveList &move_list) {
 
     // TODO(Tejas): should we use Turn or Pass Player explicitly here?..
 
@@ -308,33 +351,33 @@ void PseudoLegal::generateRookMoves(const Chess::Board *board, MoveList &moveLis
 
     BitBoard rooks = board->getPiecesOfType(Chess::Piece::ROOK, side);
 
-    BitBoard friendlyOcc = board->getOccupied(side);
-    BitBoard enemyOcc    = board->getOccupied(enemy);
+    BitBoard friendly_occ = board->getOccupied(side);
+    BitBoard enemy_occ    = board->getOccupied(enemy);
 
     while (rooks) {
 
-        int fromIdx = popLSB(rooks);
+        int from_idx = Base::popLSB(rooks);
 
-        Chess::Square from(fromIdx);
+        Chess::Square from(from_idx);
 
-        BitBoard attacks = Attack::rookAttacks(fromIdx, friendlyOcc | enemyOcc);
-        BitBoard targets = attacks & ~friendlyOcc;
+        BitBoard attacks = Attack::rookAttacks(from_idx, friendly_occ | enemy_occ);
+        BitBoard targets = attacks & ~friendly_occ;
 
         while (targets) {
 
-            int toIdx = popLSB(targets);
-            Chess::Square to(toIdx);
+            int to_idx = Base::popLSB(targets);
+            Chess::Square to(to_idx);
 
-            if (enemyOcc & (1ULL << toIdx)) {
-                moveList.push_back({from, to, Move::CAPTURE});
+            if (enemy_occ & (1ULL << to_idx)) {
+                move_list.push_back({from, to, Move::CAPTURE});
             } else {
-                moveList.push_back({from, to, Move::QUIET});
+                move_list.push_back({from, to, Move::QUIET});
             }
         }
     }
 }
 
-void PseudoLegal::generateQueenMoves(const Chess::Board *board, MoveList &moveList) {
+void PseudoLegal::generateQueenMoves(const Chess::Board *board, MoveList &move_list) {
 
     // TODO(Tejas): should we use Turn or Pass Player explicitly here?..
 
@@ -343,32 +386,59 @@ void PseudoLegal::generateQueenMoves(const Chess::Board *board, MoveList &moveLi
 
     BitBoard queens = board->getPiecesOfType(Chess::Piece::QUEEN, side);
 
-    BitBoard friendlyOcc = board->getOccupied(side);
-    BitBoard enemyOcc    = board->getOccupied(enemy);
+    BitBoard friendly_occ = board->getOccupied(side);
+    BitBoard enemy_occ    = board->getOccupied(enemy);
 
     while (queens) {
 
-        int fromIdx = popLSB(queens);
+        int from_idx = Base::popLSB(queens);
 
-        Chess::Square from(fromIdx);
+        Chess::Square from(from_idx);
 
-        BitBoard attacks = Attack::queenAttacks(fromIdx, friendlyOcc | enemyOcc);
-        BitBoard targets = attacks & ~friendlyOcc;
+        BitBoard attacks = Attack::queenAttacks(from_idx, friendly_occ | enemy_occ);
+        BitBoard targets = attacks & ~friendly_occ;
 
         while (targets) {
 
-            int toIdx = popLSB(targets);
-            Chess::Square to(toIdx);
+            int to_idx = Base::popLSB(targets);
+            Chess::Square to(to_idx);
 
-            if (enemyOcc & (1ULL << toIdx)) {
-                moveList.push_back({from, to, Move::CAPTURE});
+            if (enemy_occ & (1ULL << to_idx)) {
+                move_list.push_back({from, to, Move::CAPTURE});
             } else {
-                moveList.push_back({from, to, Move::QUIET});
+                move_list.push_back({from, to, Move::QUIET});
             }
         }
     }
 }
 
-void PseudoLegal::generateKingMoves(const Chess::Board *board, MoveList &moveList) {
+void PseudoLegal::generateKingMoves(const Chess::Board *board, MoveList &move_list) {
 
+    Chess::Player side  = board->getTurn();
+    Chess::Player enemy = (side == Chess::Player::LIGHT) ? Chess::Player::DARK : Chess::Player::LIGHT;
+
+    BitBoard king = board->getPiecesOfType(Chess::Piece::KING, side);
+
+    BitBoard friendly_occ = board->getOccupied(side);
+    BitBoard enemy_occ    = board->getOccupied(enemy);
+
+    int from_idx = Base::popLSB(king);  // only one king
+    Chess::Square from(from_idx);
+
+    BitBoard attacks = Attack::kingAttacks(from_idx);
+    BitBoard targets = attacks & ~friendly_occ;
+
+    while (targets) {
+
+        int to_idx = Base::popLSB(targets);
+        Chess::Square to(to_idx);
+
+        if (enemy_occ & (1ULL << to_idx)) {
+            move_list.push_back({from, to, Move::CAPTURE});
+        } else {
+            move_list.push_back({from, to, Move::QUIET});
+        }
+    }
+
+    // TODO(Tejas): Castling Here...
 }
