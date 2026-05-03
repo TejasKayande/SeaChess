@@ -10,8 +10,9 @@ namespace Render {
 
     // TODO(Tejas): Should we have functions to modify these values? I dont know...
     struct Visual {
-        Chess::Square selected_square;
-        bool          is_board_flipped;
+        Chess::Square selected_square = Chess::Square::invalid();
+        bool is_board_flipped = false;
+        BitBoard legal_squares = 0ULL;
     };
 
     void initAssets();

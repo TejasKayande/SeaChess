@@ -6,7 +6,7 @@ using namespace State;
 GameState::GameState() {
 
     m_board  = new Chess::Board();
-    m_visual = new Render::Visual;
+    m_visual = new Render::Visual();
 
     Render::initAssets();
     MoveGen::init();
@@ -45,24 +45,20 @@ void GameState::update() {
                 if (!pc.isEmpty() && pc.isColor(m_board->getTurn())) {
 
                     m_visual->selected_square = sq;
+                    MoveGen::MoveList move_list;
+                    MoveGen::PseudoLegal::generateMovesForSquare(m_board, sq, move_list);
+                    m_visual->legal_squares = MoveGen::PseudoLegal::convertMoveListToBitBoard(move_list);
                 }
             }
 
             // NOTE(Tejas): if a piece was already selected
             else {
 
-                MoveGen::MoveList move_list;
-                MoveGen::PseudoLegal::generateMovesForSquare(m_board, m_visual->selected_square, move_list);
-
-                bool valid = false;
-                for (const auto& move : move_list) {
-                    if (move.to == sq) {
-                        valid = true;
-                        m_board->move(m_visual->selected_square, sq);
-                        m_visual->selected_square = Chess::Square::invalid();
-                        m_board->changeTurn();
-                        break;
-                    }
+                if (sq.isSquareOnBitBoard(m_visual->legal_squares)) {
+                    m_board->move(m_visual->selected_square, sq);
+                    m_visual->selected_square = Chess::Square::invalid();
+                    m_visual->legal_squares = 0;
+                    m_board->changeTurn();
                 }
             }
         }
@@ -71,6 +67,11 @@ void GameState::update() {
     // NOTE(Tejas): Right Mouse Button
     if (::IsMouseButtonPressed(1)) {
         m_visual->selected_square = Chess::Square::invalid();
+        m_visual->legal_squares = 0;
+    }
+
+    if (MoveGen::Legal::inCheck(m_board, m_board->getTurn())) {
+        std::cout << "Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Light" : "Dark") << " is in Check!" << std::endl;
     }
 }
 
