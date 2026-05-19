@@ -16,107 +16,109 @@ struct _Assets {
 
 // TODO(Tejas): For now this is fine, but it would be better if we can have some
 // sort of asset manager.
-global _Assets G_assets;
+static _Assets G_assets;
 
-internal void renderSquareBackgroud(const Window::Section &area, Chess::Square sq) {
+namespace {
+    void renderSquareBackgroud(const Window::Section &area, Chess::Square sq) {
 
-    if (!sq.isValid()) return;
+        if (!sq.isValid()) return;
 
-    int px = area.x + sq.file() * Window::SQUARE_DIM;
-    int py = area.y + sq.rank() * Window::SQUARE_DIM;
+        int px = area.x + sq.file() * Window::SQUARE_DIM;
+        int py = area.y + sq.rank() * Window::SQUARE_DIM;
 
-    ::Color square_color = ((sq.rank() + sq.file()) % 2 == 0) ? ::RAYWHITE : ::DARKBROWN; 
-    ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, square_color);
-}
-
-internal void renderSquareHighlight(const Window::Section &area, Chess::Square sq, 
-                                    bool is_flipped, ::Color color = ::Color(100, 100, 255, 255)) {
-
-    if (!sq.isValid()) return;
-
-    int rank = sq.rank();
-    int file = sq.file();
-
-    if (is_flipped) {
-        rank = (Chess::MAX_RANK - 1) - rank;
-        file = (Chess::MAX_FILE - 1) - file;
+        ::Color square_color = ((sq.rank() + sq.file()) % 2 == 0) ? ::RAYWHITE : ::DARKBROWN; 
+        ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, square_color);
     }
 
-    int px = area.x + file * Window::SQUARE_DIM;
-    int py = area.y + rank * Window::SQUARE_DIM;
-    
-    ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, color);
-}
+    void renderSquareHighlight(const Window::Section &area, Chess::Square sq, 
+                                        bool is_flipped, ::Color color = ::Color(100, 100, 255, 255)) {
 
-internal void renderSquareCoord(const Window::Section &area, Chess::Square sq, bool is_flipped) {
+        if (!sq.isValid()) return;
 
-    if (!sq.isValid()) return;
+        int rank = sq.rank();
+        int file = sq.file();
 
-    int px = area.x + sq.file() * Window::SQUARE_DIM;
-    int py = area.y + sq.rank() * Window::SQUARE_DIM;
-    
-    ::Color text_color =  ((sq.rank() + sq.file()) % 2 == 0) ? ::DARKBROWN : ::RAYWHITE;
-    int xx = px + 5;
-    int yy = py + 5;
-    if (sq.file() == 0) {
-        std::string ch;
-        if (!is_flipped) ch = std::to_string(sq.rank() + 1);
-        else ch = std::to_string(Chess::MAX_RANK - sq.rank());
-        ::DrawTextEx(G_assets.inter_regular_24, ch.c_str(), Vector2{(float)xx, (float)yy}, 24, 2, text_color);
-    }
-    if (sq.rank() == 7) {
-        xx = px + Window::SQUARE_DIM - 15;
-        yy = py + Window::SQUARE_DIM - 25;
-        char ch[2] = { '\0' };
-        if (is_flipped) ch[0] = (char)(sq.file() + 'a');
-        else ch[0] = (char)('h' - sq.file());
-        ::DrawTextEx(G_assets.inter_regular_24, ch, Vector2{(float)xx, (float)yy}, 24, 2, text_color);
-    }
-}
-
-internal void renderPieceOnSquare(const Window::Section &area, const Chess::Square &sq,
-                                  const Chess::Piece &pc, bool is_flipped) {
-
-    if (!sq.isValid()) return;
-    if (pc.isEmpty())  return;
-
-    int file = sq.file();
-    int rank = sq.rank();
-
-    if (is_flipped) {
-        file = (Chess::MAX_FILE - 1) - file;
-        rank = (Chess::MAX_RANK - 1) - rank;
-    }
-
-    int px = area.x + file * Window::SQUARE_DIM;
-    int py = area.y + rank * Window::SQUARE_DIM;
-
-    const ::Texture2D* tex = nullptr;
-
-    if (pc.color() == Chess::Piece::LIGHT) {
-        switch (pc.type()) {
-        case Chess::Piece::PAWN:   tex = &G_assets.lPawn;   break;
-        case Chess::Piece::KNIGHT: tex = &G_assets.lKnight; break;
-        case Chess::Piece::BISHOP: tex = &G_assets.lBishop; break;
-        case Chess::Piece::ROOK:   tex = &G_assets.lRook;   break;
-        case Chess::Piece::QUEEN:  tex = &G_assets.lQueen;  break;
-        case Chess::Piece::KING:   tex = &G_assets.lKing;   break;
-        default: break;
+        if (is_flipped) {
+            rank = (Chess::MAX_RANK - 1) - rank;
+            file = (Chess::MAX_FILE - 1) - file;
         }
-    } else if (pc.color() == Chess::Piece::DARK) {
-        switch (pc.type()) {
-        case Chess::Piece::PAWN:   tex = &G_assets.dPawn;   break;
-        case Chess::Piece::KNIGHT: tex = &G_assets.dKnight; break;
-        case Chess::Piece::BISHOP: tex = &G_assets.dBishop; break;
-        case Chess::Piece::ROOK:   tex = &G_assets.dRook;   break;
-        case Chess::Piece::QUEEN:  tex = &G_assets.dQueen;  break;
-        case Chess::Piece::KING:   tex = &G_assets.dKing;   break;
-        default: break;
+
+        int px = area.x + file * Window::SQUARE_DIM;
+        int py = area.y + rank * Window::SQUARE_DIM;
+
+        ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, color);
+    }
+
+    void renderSquareCoord(const Window::Section &area, Chess::Square sq, bool is_flipped) {
+
+        if (!sq.isValid()) return;
+
+        int px = area.x + sq.file() * Window::SQUARE_DIM;
+        int py = area.y + sq.rank() * Window::SQUARE_DIM;
+
+        ::Color text_color =  ((sq.rank() + sq.file()) % 2 == 0) ? ::DARKBROWN : ::RAYWHITE;
+        int xx = px + 5;
+        int yy = py + 5;
+        if (sq.file() == 0) {
+            std::string ch;
+            if (!is_flipped) ch = std::to_string(sq.rank() + 1);
+            else ch = std::to_string(Chess::MAX_RANK - sq.rank());
+            ::DrawTextEx(G_assets.inter_regular_24, ch.c_str(), Vector2{(float)xx, (float)yy}, 24, 2, text_color);
+        }
+        if (sq.rank() == 7) {
+            xx = px + Window::SQUARE_DIM - 15;
+            yy = py + Window::SQUARE_DIM - 25;
+            char ch[2] = { '\0' };
+            if (is_flipped) ch[0] = (char)(sq.file() + 'a');
+            else ch[0] = (char)('h' - sq.file());
+            ::DrawTextEx(G_assets.inter_regular_24, ch, Vector2{(float)xx, (float)yy}, 24, 2, text_color);
         }
     }
 
-    if (tex) ::DrawTexture(*tex, px, py, WHITE);
-}
+    void renderPieceOnSquare(const Window::Section &area, const Chess::Square &sq,
+                                      const Chess::Piece &pc, bool is_flipped) {
+
+        if (!sq.isValid()) return;
+        if (pc.isEmpty())  return;
+
+        int file = sq.file();
+        int rank = sq.rank();
+
+        if (is_flipped) {
+            file = (Chess::MAX_FILE - 1) - file;
+            rank = (Chess::MAX_RANK - 1) - rank;
+        }
+
+        int px = area.x + file * Window::SQUARE_DIM;
+        int py = area.y + rank * Window::SQUARE_DIM;
+
+        const ::Texture2D* tex = nullptr;
+
+        if (pc.color() == Chess::Piece::LIGHT) {
+            switch (pc.type()) {
+            case Chess::Piece::PAWN:   tex = &G_assets.lPawn;   break;
+            case Chess::Piece::KNIGHT: tex = &G_assets.lKnight; break;
+            case Chess::Piece::BISHOP: tex = &G_assets.lBishop; break;
+            case Chess::Piece::ROOK:   tex = &G_assets.lRook;   break;
+            case Chess::Piece::QUEEN:  tex = &G_assets.lQueen;  break;
+            case Chess::Piece::KING:   tex = &G_assets.lKing;   break;
+            default: break;
+            }
+        } else if (pc.color() == Chess::Piece::DARK) {
+            switch (pc.type()) {
+            case Chess::Piece::PAWN:   tex = &G_assets.dPawn;   break;
+            case Chess::Piece::KNIGHT: tex = &G_assets.dKnight; break;
+            case Chess::Piece::BISHOP: tex = &G_assets.dBishop; break;
+            case Chess::Piece::ROOK:   tex = &G_assets.dRook;   break;
+            case Chess::Piece::QUEEN:  tex = &G_assets.dQueen;  break;
+            case Chess::Piece::KING:   tex = &G_assets.dKing;   break;
+            default: break;
+            }
+        }
+
+        if (tex) ::DrawTexture(*tex, px, py, WHITE);
+    }
+} // Anonymous namespace
 
 void Render::initAssets() {
     

@@ -1,5 +1,4 @@
-#ifndef BASE_H
-#define BASE_H
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -34,20 +33,20 @@ namespace Base {
 
 } // namespace Base
 
-#define global   static 
-#define persist  static 
-#define internal static 
-
 #define U64(x) (x##ULL)
 
-// TODO(Tejas): I dont know how this works, look into it later...
 namespace Base {
+
     inline int popLSB(u64& bb) {
         unsigned long idx;
+
+#if defined(_WIN64) || defined(_WIN32)
         _BitScanForward64(&idx, bb);
+#elif defined(__GNUC__) || defined(__clang__)
+        idx = __builtin_ctzll(bb);
+#endif
+
         bb &= bb - 1;
         return static_cast<int>(idx);
     }
 } // namespace Base
-
-#endif // BASE_H

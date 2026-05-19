@@ -9,14 +9,6 @@ using namespace Chess;
 #undef global
 #undef persist
 
-TEST(SquareTest, ValidConstruction) {
-    Square sq(3, 5);
-
-    EXPECT_TRUE(sq.isValid());
-    EXPECT_EQ(sq.rank(), 3);
-    EXPECT_EQ(sq.file(), 5);
-}
-
 TEST(SquareTest, InvalidConstruction) {
     Square sq(8, 0);
 

@@ -160,7 +160,6 @@ PColor Board::getPieceColorAt(const Square& sq) const {
 void Board::setPieceAt(const Square& sq, const Piece& piece) {
 
     const BitBoard mask = 1ULL << sq.index;
-
     removePieceAt(sq);
 
     if (!piece.isEmpty()) {

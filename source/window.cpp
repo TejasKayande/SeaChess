@@ -1,7 +1,7 @@
 
 #include "window.hpp"
 
-global bool G_onMenu = false;
+static bool G_onMenu = false;
 
 Window::Section Window::getBoardSection() {
 

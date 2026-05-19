@@ -11,9 +11,11 @@ using namespace MoveGen;
 // - [ ] Add lookup tables for sliding pieces as well: magic bitboards or
 //       PEXT/BMI2 indexed lookup tables.
 
-internal BitBoard PAWN_ATTACKS[Chess::COLOR_COUNT][64];
-internal BitBoard KNIGHT_ATTACKS[64];
-internal BitBoard KING_ATTACKS[64];
+namespace {
+    BitBoard PAWN_ATTACKS[Chess::COLOR_COUNT][64];
+    BitBoard KNIGHT_ATTACKS[64];
+    BitBoard KING_ATTACKS[64];
+} // Anonymous namespace
 
 void MoveGen::init() {
 
@@ -535,4 +537,12 @@ bool Legal::inCheck(const Chess::Board *board, Chess::Player player) {
         return true;
 
     return false;
+}
+
+void Legal::generateAllMoves(const Chess::Board* board, MoveList& move_list) {
+
+}
+
+void Legal::generateMovesForSquare(const Chess::Board* board, Chess::Square sq, MoveList& move_list) {
+
 }
