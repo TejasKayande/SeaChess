@@ -26,7 +26,7 @@ void Attack::initAttackTables() {
 
     for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
 
-        Chess::Square sq = GET_SQUARE_FROM_INDEX(sq_idx);
+        Chess::Square sq(sq_idx);
 
         int rank = sq.rank();
         int file = sq.file();

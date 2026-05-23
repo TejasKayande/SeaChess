@@ -1,10 +1,13 @@
 #pragma once
 
-#include "base.hpp"
+#include "core/base.hpp"
 #include "window.hpp"
-#include "chess.hpp"
+#include "core/piece.hpp"
+#include "core/square.hpp"
+#include "core/board.hpp"
+#include "core/move.hpp"
+#include "core/movegen.hpp"
 #include "render.hpp"
-#include "movegen.hpp"
 
 namespace State {
 

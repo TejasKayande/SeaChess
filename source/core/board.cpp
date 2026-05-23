@@ -1,4 +1,5 @@
-#include "chess.hpp"
+
+#include "board.hpp"
 #include <sstream>
 
 using namespace Chess;
@@ -9,7 +10,7 @@ Board::Board()
   _lOccupied(0), _dOccupied(0), _turn(Player::LIGHT)
 {
     reset();
-}   
+}
 
 void Board::_updateOccupancy() {
     _lOccupied = _lPawn | _lKnight | _lBishop | _lRook | _lQueen | _lKing;

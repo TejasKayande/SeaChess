@@ -1,8 +1,10 @@
 #pragma once
 
-#include "base.hpp"
+#include "core/base.hpp"
 #include "window.hpp"
-#include "chess.hpp"
+#include "core/square.hpp"
+#include "core/piece.hpp"
+#include "core/board.hpp"
 
 #include <raylib.h>
 

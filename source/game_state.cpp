@@ -45,7 +45,7 @@ void GameState::update() {
                 if (!pc.isEmpty() && pc.isColor(m_board->getTurn())) {
 
                     m_visual->selected_square = sq;
-                    MoveGen::MoveList move_list;
+                    MoveList move_list;
                     MoveGen::PseudoLegal::generateMovesForSquare(m_board, sq, move_list);
                     m_visual->legal_squares = MoveGen::PseudoLegal::convertMoveListToBitBoard(move_list);
                 }

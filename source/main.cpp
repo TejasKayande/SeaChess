@@ -1,9 +1,8 @@
-#include "base.hpp"
 #include "window.hpp"
-#include "chess.hpp"
 #include "render.hpp"
 #include "game_state.hpp"
-#include "movegen.hpp"
+#include "core/board.hpp"
+#include "core/movegen.hpp"
 
 #include <raylib.h>
 
@@ -41,6 +40,5 @@ auto main(void) -> int {
     delete gs;
 
     ::CloseWindow();
-
     return 0;
 }

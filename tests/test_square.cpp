@@ -1,13 +1,9 @@
 #define NOMINMAX
 
 #include <gtest/gtest.h>
-#include "../source/chess.hpp"
+#include "../source/core/square.hpp"
 
 using namespace Chess;
-
-#undef internal
-#undef global
-#undef persist
 
 TEST(SquareTest, InvalidConstruction) {
     Square sq(8, 0);
@@ -44,7 +40,7 @@ TEST(SquareTest, IndexMapping) {
     Square sq(6, 2);
 
     u8 idx = sq.index;
-    Square recovered = GET_SQUARE_FROM_INDEX(idx);
+    Square recovered = Square(idx);
 
     EXPECT_EQ(sq, recovered);
 }

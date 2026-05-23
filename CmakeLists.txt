@@ -9,8 +9,8 @@ add_subdirectory(dependencies/googletest)
 enable_testing()
 
 add_library(chess_core
-    source/chess.cpp
-    source/movegen.cpp
+    source/core/board.cpp
+    source/core/movegen.cpp
 )
 
 add_executable(${PROJECT_NAME}

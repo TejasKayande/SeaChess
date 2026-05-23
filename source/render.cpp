@@ -1,6 +1,5 @@
 
 #include "render.hpp"
-#include "movegen.hpp"
 
 using namespace Render;
 
@@ -18,7 +17,8 @@ struct _Assets {
 // sort of asset manager.
 static _Assets G_assets;
 
-namespace {
+namespace { // Anonymous namespace for helper functions
+
     void renderSquareBackgroud(const Window::Section &area, Chess::Square sq) {
 
         if (!sq.isValid()) return;

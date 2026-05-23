@@ -1,11 +1,7 @@
 
 #define NOMINMAX
 #include <gtest/gtest.h>
-#include "../source/chess.hpp"
-
-#undef internal
-#undef global
-#undef persist
+#include "../source/core/piece.hpp"
 
 using namespace Chess;
 
