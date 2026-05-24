@@ -46,7 +46,7 @@ void GameState::update() {
 
                     m_visual->selected_square = sq;
                     MoveList move_list;
-                    MoveGen::PseudoLegal::generateMovesForSquare(m_board, sq, move_list);
+                    MoveGen::Legal::generateMovesForSquare(m_board, sq, move_list);
                     m_visual->legal_squares = MoveGen::PseudoLegal::convertMoveListToBitBoard(move_list);
                 }
             }

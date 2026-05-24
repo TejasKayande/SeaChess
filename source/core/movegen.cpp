@@ -541,8 +541,34 @@ bool Legal::inCheck(const Chess::Board *board, Chess::Player player) {
 
 void Legal::generateAllMoves(const Chess::Board* board, MoveList& move_list) {
 
+    MoveList pseudo_moves;
+    PseudoLegal::generateAllMoves(board, board->getTurn(), pseudo_moves);
+
+    for (const Move &move : pseudo_moves) {
+
+        // TODO(Tejas): Use undo move instead of making a copy.
+        Chess::Board temp_board = *board;
+        temp_board.move(move.from, move.to);
+
+        if (!inCheck(&temp_board, board->getTurn())) {
+            move_list.push_back(move);
+        }
+    }
 }
 
 void Legal::generateMovesForSquare(const Chess::Board* board, Chess::Square sq, MoveList& move_list) {
 
+    MoveList pseudo_moves;
+    PseudoLegal::generateMovesForSquare(board, sq, pseudo_moves);
+
+    for (const Move &move : pseudo_moves) {
+
+        // TODO(Tejas): Use undo move instead of making a copy.
+        Chess::Board temp_board = *board;
+        temp_board.move(move.from, move.to);
+
+        if (!inCheck(&temp_board, board->getTurn())) {
+            move_list.push_back(move);
+        }
+    }
 }
