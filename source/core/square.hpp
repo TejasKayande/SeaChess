@@ -3,7 +3,7 @@
 
 using BitBoard = u64;
 
-#define GET_INDEX_FROM_SQUARE(rank, file) (((rank) << 3) | (file))
+// #define GET_INDEX_FROM_SQUARE(rank, file) (((rank) << 3) | (file))
 
 namespace Chess {
 
@@ -29,6 +29,8 @@ namespace Chess {
 
         constexpr bool isValid() const { return index < INVALID; }
         constexpr static Square invalid() { return Square(INVALID, INVALID); }
+
+        constexpr u8 toIndex() const { return index; }
     };
 
 } // namespace Chess

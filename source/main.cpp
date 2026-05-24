@@ -12,7 +12,6 @@ TODO(Tejas):
 - [ ] Create a Config/Setting file for constants.
 - [ ] Abstract Chess Core into seperate module.
 
-- [ ] Check the King and Queen Swapped issue in chess.cpp
 - [ ] For a clicked piece we only need to generate the legal moves for that piece
 - [ ] Add Magic Bitboards for move generation of sliding pieces
 - [ ] No dynamic datastructures for move generation.

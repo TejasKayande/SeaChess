@@ -44,7 +44,7 @@ void Attack::initAttackTables() {
                 int nf = file + df[i];
 
                 if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-                    int idx = GET_INDEX_FROM_SQUARE(nr, nf);
+                    int idx = Chess::Square(nr, nf).toIndex();
                     mask |= (1ULL << idx);
                 }
             }
@@ -65,7 +65,7 @@ void Attack::initAttackTables() {
                 int nf = file + df[i];
 
                 if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-                    int idx = GET_INDEX_FROM_SQUARE(nr, nf);
+                    int idx = Chess::Square(nr, nf).toIndex();
                     mask |= (1ULL << idx);
                 }
             }
@@ -82,12 +82,12 @@ void Attack::initAttackTables() {
             if (nr < 8) {
 
                 if (file - 1 >= 0) {
-                    int idx = GET_INDEX_FROM_SQUARE(nr, file - 1);
+                    int idx = Chess::Square(nr, file - 1).toIndex();
                     mask |= (1ULL << idx);
                 }
 
                 if (file + 1 < Chess::MAX_FILE) {
-                    int idx = GET_INDEX_FROM_SQUARE(nr, file + 1);
+                    int idx = Chess::Square(nr, file + 1).toIndex();
                     mask |= (1ULL << idx);
                 }
             }
@@ -104,12 +104,12 @@ void Attack::initAttackTables() {
             if (nr >= 0) {
 
                 if (file - 1 >= 0) {
-                    int idx = GET_INDEX_FROM_SQUARE(nr, file - 1);
+                    int idx = Chess::Square(nr, file - 1).toIndex();
                     mask |= (1ULL << idx);
                 }
 
                 if (file + 1 < 8) {
-                    int idx = GET_INDEX_FROM_SQUARE(nr, file + 1);
+                    int idx = Chess::Square(nr, file + 1).toIndex();
                     mask |= (1ULL << idx);
                 }
             }
@@ -138,7 +138,7 @@ BitBoard Attack::bishopAttacks(Chess::Square sq, BitBoard occ) {
 
     // NOTE(Tejas): Right-Up Diagonal
     for (int nr = rank + 1, nf = file + 1; nr < 8 && nf < 8; nr++, nf++) {
-        int idx = GET_INDEX_FROM_SQUARE(nr, nf);
+        int idx = Chess::Square(nr, nf).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
@@ -146,7 +146,7 @@ BitBoard Attack::bishopAttacks(Chess::Square sq, BitBoard occ) {
 
     // NOTE(Tejas): Left-Up Diagonal
     for (int nr = rank + 1, nf = file - 1; nr < 8 && nf >= 0; nr++, nf--) {
-        int idx = GET_INDEX_FROM_SQUARE(nr, nf);
+        int idx = Chess::Square(nr, nf).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
@@ -154,7 +154,7 @@ BitBoard Attack::bishopAttacks(Chess::Square sq, BitBoard occ) {
 
     // Note(Tejas): Right-Down Diagonal
     for (int nr = rank - 1, nf = file + 1; nr >= 0 && nf < 8; nr--, nf++) {
-        int idx = GET_INDEX_FROM_SQUARE(nr, nf);
+        int idx = Chess::Square(nr, nf).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
@@ -162,7 +162,7 @@ BitBoard Attack::bishopAttacks(Chess::Square sq, BitBoard occ) {
 
     // Note(Tejas): Left-Down Diagonal
     for (int nr = rank - 1, nf = file - 1; nr >= 0 && nf >= 0; nr--, nf--) {
-        int idx = GET_INDEX_FROM_SQUARE(nr, nf);
+        int idx = Chess::Square(nr, nf).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
@@ -180,7 +180,7 @@ BitBoard Attack::rookAttacks(Chess::Square sq, BitBoard occ) {
 
     // NOTE(Tejas): Up
     for (int nr = rank + 1; nr < 8; nr++) {
-        int idx = GET_INDEX_FROM_SQUARE(nr, file);
+        int idx = Chess::Square(nr, file).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
@@ -188,7 +188,7 @@ BitBoard Attack::rookAttacks(Chess::Square sq, BitBoard occ) {
 
     // NOTE(Tejas): Down
     for (int nr = rank - 1; nr >= 0; nr--) {
-        int idx = GET_INDEX_FROM_SQUARE(nr, file);
+        int idx = Chess::Square(nr, file).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
@@ -196,7 +196,7 @@ BitBoard Attack::rookAttacks(Chess::Square sq, BitBoard occ) {
 
     // NOTE(Tejas): Right
     for (int nf = file + 1; nf < 8; nf++) {
-        int idx = GET_INDEX_FROM_SQUARE(rank, nf);
+        int idx = Chess::Square(rank, nf).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
@@ -204,7 +204,7 @@ BitBoard Attack::rookAttacks(Chess::Square sq, BitBoard occ) {
 
     // NOTE(Tejas): Left
     for (int nf = file - 1; nf >= 0; nf--) {
-        int idx = GET_INDEX_FROM_SQUARE(rank, nf);
+        int idx = Chess::Square(rank, nf).toIndex();
         attacks |= (1ULL << idx);
 
         if (occ & (1ULL << idx)) break;
