@@ -242,11 +242,24 @@ void Board::reset() {
     _turn = Player::LIGHT;
 }
 
-void Board::move(Square from, Square to) {
+bool Board::makeMove(const Move& m) {
 
-    Piece pc = getPieceAt(from);
-    setPieceAt(from, Piece::nopiece());
-    setPieceAt(to, pc);
+    bool move_made = false;
+
+    if (
+        m.type == MoveType::CAPTURE || 
+        m.type == MoveType::QUIET || 
+        m.type == MoveType::DOUBLE_PAWN_PUSH
+       )
+    {
+        Piece pc = getPieceAt(m.from);
+        setPieceAt(m.from, Piece::nopiece());
+        setPieceAt(m.to, pc);
+
+        return true;
+    }
+
+    return move_made;
 }
 
 BitBoard Board::getOccupied() const {

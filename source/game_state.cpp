@@ -8,6 +8,8 @@ GameState::GameState() {
     m_board  = new Chess::Board();
     m_visual = new Render::Visual();
 
+    m_move_list = MoveList();
+
     Render::initAssets();
     MoveGen::init();
 }
@@ -45,9 +47,9 @@ void GameState::update() {
                 if (!pc.isEmpty() && pc.isColor(m_board->getTurn())) {
 
                     m_visual->selected_square = sq;
-                    MoveList move_list;
-                    MoveGen::Legal::generateMovesForSquare(m_board, sq, move_list);
-                    m_visual->legal_squares = MoveGen::PseudoLegal::convertMoveListToBitBoard(move_list);
+                    m_move_list.clear();
+                    MoveGen::Legal::generateMovesForSquare(m_board, sq, m_move_list);
+                    m_visual->legal_squares = MoveGen::PseudoLegal::convertMoveListToBitBoard(m_move_list);
                 }
             }
 
@@ -55,10 +57,20 @@ void GameState::update() {
             else {
 
                 if (sq.isSquareOnBitBoard(m_visual->legal_squares)) {
-                    m_board->move(m_visual->selected_square, sq);
-                    m_visual->selected_square = Chess::Square::invalid();
-                    m_visual->legal_squares = 0;
-                    m_board->changeTurn();
+
+                    // TODO(Tejas): This is pretty inefficient, we can optimize
+                    //              it by storing the legal moves in a hashset
+                    //              or something...
+                    for (const Move &move : m_move_list) {
+                        if (move.to == sq) {
+                            if (m_board->makeMove(move)) {
+                                m_visual->legal_squares = 0;
+                                m_board->changeTurn();
+                            }
+                            m_visual->selected_square = Chess::Square::invalid();
+                            break;
+                        }
+                    }
                 }
             }
         }

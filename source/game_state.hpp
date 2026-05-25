@@ -22,8 +22,12 @@ namespace State {
         void render();
 
     private:
+
         Chess::Board   *m_board;
         Render::Visual *m_visual;
+
+        // NOTE(Tejas): List of current legal moves for the selected piece, if any.
+        MoveList m_move_list; 
     };
 
 } // namespace Game

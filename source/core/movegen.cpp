@@ -548,10 +548,10 @@ void Legal::generateAllMoves(const Chess::Board* board, MoveList& move_list) {
 
         // TODO(Tejas): Use undo move instead of making a copy.
         Chess::Board temp_board = *board;
-        temp_board.move(move.from, move.to);
-
-        if (!inCheck(&temp_board, board->getTurn())) {
-            move_list.push_back(move);
+        if (temp_board.makeMove(move)) {
+            if (!inCheck(&temp_board, board->getTurn())) {
+                move_list.push_back(move);
+            }
         }
     }
 }
@@ -565,10 +565,10 @@ void Legal::generateMovesForSquare(const Chess::Board* board, Chess::Square sq, 
 
         // TODO(Tejas): Use undo move instead of making a copy.
         Chess::Board temp_board = *board;
-        temp_board.move(move.from, move.to);
-
-        if (!inCheck(&temp_board, board->getTurn())) {
-            move_list.push_back(move);
+        if (temp_board.makeMove(move)) {
+            if (!inCheck(&temp_board, board->getTurn())) {
+                move_list.push_back(move);
+            }
         }
     }
 }

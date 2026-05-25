@@ -31,7 +31,7 @@ namespace { // Anonymous namespace for helper functions
     }
 
     void renderSquareHighlight(const Window::Section &area, Chess::Square sq, 
-                                        bool is_flipped, ::Color color = ::Color(100, 100, 255, 255)) {
+                                        bool is_flipped, ::Color color = ::Color{100, 100, 255, 255}) {
 
         if (!sq.isValid()) return;
 
@@ -192,7 +192,7 @@ void Render::renderBoard(const Window::Section &area, const Chess::Board *board,
             if (sq == visual->selected_square) renderSquareHighlight(area, sq, visual->is_board_flipped);
 
             if (sq.isSquareOnBitBoard(visual->legal_squares)) 
-                renderSquareHighlight(area, sq, visual->is_board_flipped, ::Color(255, 0, 255, 200));
+                renderSquareHighlight(area, sq, visual->is_board_flipped, ::Color{255, 0, 255, 200});
 
             Chess::Piece pc  = board->getPieceAt(sq);
             renderPieceOnSquare(area, sq, pc, visual->is_board_flipped);
@@ -202,20 +202,20 @@ void Render::renderBoard(const Window::Section &area, const Chess::Board *board,
 
 void Render::renderMenu(const Window::Section &area) {
 
-    ::Color menu_background = ::Color(0x44, 0x44, 0x44, 0x99);
+    ::Color menu_background = ::Color{0x44, 0x44, 0x44, 0x99};
     Window::Section menu_section = Window::getMenuSection();
     ::DrawTextEx(G_assets.inter_regular_50, "Menu",
                  Vector2{ (float)menu_section.width / 2 - 50, (float)50 },
-                 50, 2, ::Color(0, 255, 255, 255));
+                 50, 2, ::Color({0, 255, 255, 255}));
     ::DrawRectangleRec(area, menu_background);
 }
 
 void Render::renderInfo(const Window::Section &area) {
 
-    ::DrawRectangleRec(area, ::Color(100, 100, 100, 255));
+    ::DrawRectangleRec(area, ::Color{100, 100, 100, 255});
 }
 
 void Render::renderStatus(const Window::Section &area) {
 
-    ::DrawRectangleRec(area, ::Color(18, 18, 18, 255));
+    ::DrawRectangleRec(area, ::Color{18, 18, 18, 255});
 }

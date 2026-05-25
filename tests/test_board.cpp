@@ -48,7 +48,7 @@ TEST(BoardTest, MovePiece) {
 
     Piece p = b.getPieceAt(from);
 
-    b.move(from, to);
+    b.makeMove({from, to, MoveType::QUIET});
 
     EXPECT_TRUE(b.getPieceAt(from).isEmpty());
     EXPECT_EQ(b.getPieceAt(to), p);

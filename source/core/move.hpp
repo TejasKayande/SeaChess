@@ -3,7 +3,6 @@
 #include "base.hpp"
 #include "piece.hpp"
 #include "square.hpp"
-#include "board.hpp"
 
 #include <vector>
 

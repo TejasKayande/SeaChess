@@ -3,6 +3,7 @@
 #include "base.hpp"
 #include "piece.hpp"
 #include "square.hpp"
+#include "move.hpp"
 
 #include <string>
 
@@ -33,7 +34,7 @@ namespace Chess {
 
         void reset();
 
-        void move(Square from, Square to);
+        bool makeMove(const Move& m);
 
         BitBoard getOccupied() const;
         BitBoard getOccupied(Player p) const;
