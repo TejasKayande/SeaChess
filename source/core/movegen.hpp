@@ -7,9 +7,6 @@
 #include "move.hpp"
 #include <vector>
 
-// TODO(Tejas):
-// - [ ] Seperate Attack, Pseudo-Legal and Legal move into seperate files.
-
 namespace MoveGen {
 
     void init();

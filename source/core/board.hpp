@@ -49,6 +49,7 @@ namespace Chess {
         BitBoard getPiecesOfType(PType type, Player p) const;
 
         u8 getCastlingRights() const;
+        Square getEnPassantTarget() const;
 
     private:
 
@@ -63,6 +64,7 @@ namespace Chess {
         Player _turn;
 
         u8 _castling_rights;
+        Square _en_passant_target;
 
     private:
 

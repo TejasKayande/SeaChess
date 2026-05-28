@@ -8,12 +8,11 @@
 
 /*
 TODO(Tejas):
-- [ ] Abstract Input like in Text-Editor project.
 - [ ] Create a Config/Setting file for constants.
-- [ ] Abstract Chess Core into seperate module.
 
 - [ ] Add Magic Bitboards for move generation of sliding pieces
 - [ ] No dynamic datastructures for move generation.
+- [ ] Fix Fen parsing for castling rights and en-passant square.
 */
 
 auto main(void) -> int {

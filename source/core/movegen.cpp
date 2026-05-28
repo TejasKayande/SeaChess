@@ -410,6 +410,12 @@ void PseudoLegal::generatePawnMoves(const Chess::Board *board, Chess::Player pla
 
             move_list.push_back({from, to, Move::CAPTURE});
         }
+
+        // NOTE(Tejas): En Passant
+        Chess::Square ep_target = board->getEnPassantTarget();
+        if (ep_target.isValid() && attacks & (1ULL << ep_target.toIndex())) {
+            move_list.push_back({from, ep_target, Move::EN_PASSANT});
+        }
     }
 }
 

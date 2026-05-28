@@ -243,6 +243,7 @@ void Board::reset() {
                        CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE;
 
     _updateOccupancy();
+    _en_passant_target = Square::invalid();
 
     _turn = Player::LIGHT;
 }
@@ -255,65 +256,96 @@ bool Board::makeMove(const Move& m) {
 
     if (moving_piece.isEmpty() || moving_piece.color() != getTurn()) return false;
 
-    if (
-        m.type == MoveType::CAPTURE || 
-        m.type == MoveType::QUIET ||
-        m.type == MoveType::DOUBLE_PAWN_PUSH
-       ) 
-    {
-        setPieceAt(m.from, Piece::nopiece());
-        setPieceAt(m.to, moving_piece);
+    if (m.type != MoveType::DOUBLE_PAWN_PUSH) _en_passant_target = Square::invalid();
 
-        if (moving_piece.type() == PType::KING) {
-            _castling_rights &= (moving_piece.color() == PColor::LIGHT) ? 
-                                ~(CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE)
-                              : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
+    switch (m.type) {
+
+        case  MoveType::CAPTURE: 
+        case  MoveType::QUIET: {
+
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, moving_piece);
+
+            if (moving_piece.type() == PType::KING) {
+                _castling_rights &= (moving_piece.color() == PColor::LIGHT) ? 
+                                    ~(CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE)
+                                  : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
+            }
+
+            if (moving_piece.type() == PType::ROOK) {
+                if (m.from == Square(0, 0))      _castling_rights &= ~CastlingRights::LIGHT_KING_SIDE;  // a1
+                else if (m.from == Square(0, 7)) _castling_rights &= ~CastlingRights::LIGHT_QUEEN_SIDE; // h1
+                else if (m.from == Square(7, 0)) _castling_rights &= ~CastlingRights::DARK_KING_SIDE;   // a8
+                else if (m.from == Square(7, 7)) _castling_rights &= ~CastlingRights::DARK_QUEEN_SIDE;  // h8
+            }
+
+            return true;
+
+        } break;
+
+        case MoveType::DOUBLE_PAWN_PUSH: {
+
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, moving_piece);
+
+            int dir = (moving_piece.color() == PColor::LIGHT) ? -8 : +8;
+            _en_passant_target = Square(m.to.toIndex() + dir);
+
+            return true;
+
+        } break;
+
+        case MoveType::KING_CASTLE: {
+
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, moving_piece);
+
+            if (m.to == Square(0, 1)) {
+                setPieceAt(Square(0, 0), Piece::nopiece());
+                setPieceAt(Square(0, 2), Piece(PType::ROOK, PColor::LIGHT));
+            }
+
+            if (m.to == Square(7, 1)) {
+                setPieceAt(Square(7, 0), Piece::nopiece());
+                setPieceAt(Square(7, 2), Piece(PType::ROOK, PColor::DARK));
+            }
+
+            return true;
+
+        } break;
+
+        case MoveType::QUEEN_CASTLE: {
+
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, moving_piece);
+
+            if (m.to == Square(0, 5)) {
+                setPieceAt(Square(0, 7), Piece::nopiece());
+                setPieceAt(Square(0, 4), Piece(PType::ROOK, PColor::LIGHT));
+            } 
+
+            if (m.to == Square(7, 5)) {
+                setPieceAt(Square(7, 7), Piece::nopiece());
+                setPieceAt(Square(7, 4), Piece(PType::ROOK, PColor::DARK));
+             }
+
+            return true;
+
+        } break;
+
+        case MoveType::EN_PASSANT: {
+
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, moving_piece);
+
+            int dir = (moving_piece.color() == PColor::LIGHT) ? -8 : +8;
+            Square captured_pawn_sq(m.to.toIndex() + dir);
+            setPieceAt(captured_pawn_sq, Piece::nopiece());
+
+            return true;
         }
 
-        if (moving_piece.type() == PType::ROOK) {
-            if (m.from == Square(0, 0))      _castling_rights &= ~CastlingRights::LIGHT_KING_SIDE;  // a1
-            else if (m.from == Square(0, 7)) _castling_rights &= ~CastlingRights::LIGHT_QUEEN_SIDE; // h1
-            else if (m.from == Square(7, 0)) _castling_rights &= ~CastlingRights::DARK_KING_SIDE;   // a8
-            else if (m.from == Square(7, 7)) _castling_rights &= ~CastlingRights::DARK_QUEEN_SIDE;  // h8
-        }
-
-        return true;
-    }
-
-    if (m.type == MoveType::KING_CASTLE) {
-
-        setPieceAt(m.from, Piece::nopiece());
-        setPieceAt(m.to, moving_piece);
-
-        if (m.to == Square(0, 1)) {
-            setPieceAt(Square(0, 0), Piece::nopiece());
-            setPieceAt(Square(0, 2), Piece(PType::ROOK, PColor::LIGHT));
-        }
-
-        if (m.to == Square(7, 1)) {
-            setPieceAt(Square(7, 0), Piece::nopiece());
-            setPieceAt(Square(7, 2), Piece(PType::ROOK, PColor::DARK));
-        }
-
-        return true;
-    }
-
-    if (m.type == MoveType::QUEEN_CASTLE) {
-
-        setPieceAt(m.from, Piece::nopiece());
-        setPieceAt(m.to, moving_piece);
-
-        if (m.to == Square(0, 5)) {
-            setPieceAt(Square(0, 7), Piece::nopiece());
-            setPieceAt(Square(0, 4), Piece(PType::ROOK, PColor::LIGHT));
-        } 
-
-        if (m.to == Square(7, 5)) {
-            setPieceAt(Square(7, 7), Piece::nopiece());
-            setPieceAt(Square(7, 4), Piece(PType::ROOK, PColor::DARK));
-         }
-
-        return true;
+        default: {} break;
     }
 
     return move_made;
@@ -345,4 +377,9 @@ BitBoard Board::getPiecesOfType(PType type, Player p) const {
 u8 Board::getCastlingRights() const { 
 
     return _castling_rights; 
+}
+
+Square Board::getEnPassantTarget() const {
+
+    return _en_passant_target;
 }

@@ -30,6 +30,7 @@ add_executable(Tests
     tests/test_piece.cpp
     tests/test_board.cpp
     tests/test_fen.cpp
+    tests/test_movegen.cpp
 )
 
 target_link_libraries(Tests
