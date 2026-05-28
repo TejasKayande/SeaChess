@@ -12,6 +12,13 @@ namespace Chess {
     constexpr int MAX_FILE = 8;
     constexpr int MAX_RANK = 8;
 
+    enum CastlingRights : u8 {
+        LIGHT_KING_SIDE  = 1 << 0,
+        LIGHT_QUEEN_SIDE = 1 << 1,
+        DARK_KING_SIDE   = 1 << 2,
+        DARK_QUEEN_SIDE  = 1 << 3,
+    };
+
     class Board {
 
     public:
@@ -41,8 +48,12 @@ namespace Chess {
 
         BitBoard getPiecesOfType(PType type, Player p) const;
 
+        u8 getCastlingRights() const;
+
     private:
 
+        // TODO(Tejas): Replace these with arrays or something, this is pretty
+        //              bad for cache locality.
         BitBoard _lPawn, _lKnight, _lBishop, _lRook, _lQueen, _lKing;
         BitBoard _dPawn, _dKnight, _dBishop, _dRook, _dQueen, _dKing; 
 
@@ -50,6 +61,8 @@ namespace Chess {
         BitBoard _dOccupied;
 
         Player _turn;
+
+        u8 _castling_rights;
 
     private:
 

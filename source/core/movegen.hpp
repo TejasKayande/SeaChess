@@ -16,7 +16,11 @@ namespace MoveGen {
 
     namespace Attack {
 
+        // TODO(Tejas): we can have a function that returns if a square is attacked.
+
         void initAttackTables();
+
+        BitBoard getAllAttacks(Chess::Board board, Chess::Player player);
 
         BitBoard pawnAttacks(Chess::Square sq, Chess::Player p);
         BitBoard knightAttacks(Chess::Square sq);
@@ -49,5 +53,5 @@ namespace MoveGen {
         void generateAllMoves(const Chess::Board *board, MoveList &move_list);
         void generateMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
     }
-    
+
 } // namespace MoveGen

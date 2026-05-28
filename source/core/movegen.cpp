@@ -12,14 +12,130 @@ using namespace MoveGen;
 //       PEXT/BMI2 indexed lookup tables.
 
 namespace {
+
     BitBoard PAWN_ATTACKS[Chess::COLOR_COUNT][64];
     BitBoard KNIGHT_ATTACKS[64];
     BitBoard KING_ATTACKS[64];
+
+    void generateCastlingMoves(const Chess::Board *board, Chess::Player player, MoveList &move_list) {
+
+        u8 castling_rights = board->getCastlingRights();
+        if (!castling_rights) return;
+
+        Chess::Player enemy = (player == Chess::Player::LIGHT) ? Chess::Player::DARK : Chess::Player::LIGHT;
+        Chess::Square from = (player == Chess::Player::LIGHT) ? Chess::Square(0, 3) : Chess::Square(7, 3);
+
+        // NOTE(Tejas): This should never happen, but just in case.
+        if (board->getPieceTypeAt(from) != Chess::PType::KING) return;
+
+        BitBoard all_occ = board->getOccupied();
+
+        if (player == Chess::Player::LIGHT) {
+            // King-side castle
+            if (castling_rights & Chess::CastlingRights::LIGHT_KING_SIDE)  {
+
+                // NOTE(Tejas): we need to check for squares to be empty and not under attack: 
+                //              f1(0, 2), g1(0, 3)
+                u64 f1_mask = (1ULL << Chess::Square(0, 2).toIndex());
+                u64 g1_mask = (1ULL << Chess::Square(0, 1).toIndex());
+                u64 e1_mask = (1ULL << Chess::Square(0, 3).toIndex());
+                if (!(all_occ & f1_mask) && !(all_occ & g1_mask)) {
+                    // NOTE(Tejas): we also need to check if the king is currently in
+                    //              check or if it passes through an attacked square
+                    BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
+                    if (!(enemy_attacks & e1_mask) && !(enemy_attacks & f1_mask) && !(enemy_attacks & g1_mask)) {
+                        move_list.push_back({from, Chess::Square(0, 1), Move::KING_CASTLE});
+                    }
+                }
+            }
+
+            if (castling_rights & Chess::CastlingRights::LIGHT_QUEEN_SIDE) {
+                // NOTE(Tejas): Square to check: d1(0, 4), c1(0, 5), b1(0, 6)
+                u64 d1_mask = (1ULL << Chess::Square(0, 4).toIndex());
+                u64 c1_mask = (1ULL << Chess::Square(0, 5).toIndex());
+                u64 b1_mask = (1ULL << Chess::Square(0, 6).toIndex());
+                u64 e1_mask = (1ULL << Chess::Square(0, 3).toIndex());
+
+                if (!(all_occ & d1_mask) && !(all_occ & c1_mask) && !(all_occ & b1_mask)) {
+                    // NOTE(Tejas): we also need to check if the king is currently in
+                    //              check or if it passes through an attacked square
+                    BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
+                    if (!(enemy_attacks & e1_mask) && !(enemy_attacks & d1_mask) && !(enemy_attacks & c1_mask)) {
+                        move_list.push_back({from, Chess::Square(0, 5), Move::QUEEN_CASTLE});
+                    }
+                }
+            }
+        }
+
+        if (player == Chess::Player::DARK) {
+            // King-side castle
+            if (castling_rights & Chess::CastlingRights::DARK_KING_SIDE)  {
+
+                // NOTE(Tejas): we need to check for squares to be empty and not under attack: 
+                //              f8(7, 2), g8(0, 3)
+                u64 f8_mask = (1ULL << Chess::Square(7, 2).toIndex());
+                u64 g8_mask = (1ULL << Chess::Square(7, 1).toIndex());
+                u64 e8_mask = (1ULL << Chess::Square(7, 3).toIndex());
+                if (!(all_occ & f8_mask) && !(all_occ & g8_mask)) {
+                    // NOTE(Tejas): we also need to check if the king is currently in
+                    //              check or if it passes through an attacked square
+                    BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
+                    if (!(enemy_attacks & e8_mask) && !(enemy_attacks & f8_mask) && !(enemy_attacks & g8_mask)) {
+                        move_list.push_back({from, Chess::Square(7, 1), Move::KING_CASTLE});
+                    }
+                }
+            }
+
+            if (castling_rights & Chess::CastlingRights::DARK_QUEEN_SIDE) {
+                // NOTE(Tejas): Square to check: d1(0, 4), c1(0, 5), b1(0, 6)
+                u64 d8_mask = (1ULL << Chess::Square(7, 4).toIndex());
+                u64 c8_mask = (1ULL << Chess::Square(7, 5).toIndex());
+                u64 b8_mask = (1ULL << Chess::Square(7, 6).toIndex());
+                u64 e8_mask = (1ULL << Chess::Square(7, 3).toIndex());
+
+                if (!(all_occ & d8_mask) && !(all_occ & c8_mask) && !(all_occ & b8_mask)) {
+                    // NOTE(Tejas): we also need to check if the king is currently in
+                    //              check or if it passes through an attacked square
+                    BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
+                    if (!(enemy_attacks & e8_mask) && !(enemy_attacks & d8_mask) && !(enemy_attacks & c8_mask)) {
+                        move_list.push_back({from, Chess::Square(7, 5), Move::QUEEN_CASTLE});
+                    }
+                }
+            }
+        }
+    }
+
 } // Anonymous namespace
 
 void MoveGen::init() {
 
     Attack::initAttackTables();
+}
+
+BitBoard Attack::getAllAttacks(Chess::Board board, Chess::Player player) {
+
+    BitBoard friendly_occ = board.getOccupied(player);
+
+    BitBoard attacks = 0ULL;
+
+    while (friendly_occ) {
+
+        int sq_idx = Base::popLSB(friendly_occ);
+        Chess::Square sq(sq_idx);
+        Chess::Piece piece = board.getPieceAt(sq);
+
+        switch (piece.type()) {
+            case Chess::Piece::PAWN:   attacks |= pawnAttacks(sq, piece.color()); break;
+            case Chess::Piece::KNIGHT: attacks |= knightAttacks(sq); break;
+            case Chess::Piece::BISHOP: attacks |= bishopAttacks(sq, board.getOccupied()); break;
+            case Chess::Piece::ROOK:   attacks |= rookAttacks(sq, board.getOccupied()); break;
+            case Chess::Piece::QUEEN:  attacks |= queenAttacks(sq, board.getOccupied()); break;
+            case Chess::Piece::KING:   attacks |= kingAttacks(sq); break;
+            default: break;
+        }
+    }
+
+    return attacks;
 }
 
 void Attack::initAttackTables() {
@@ -460,7 +576,7 @@ void PseudoLegal::generateKingMoves(const Chess::Board *board, Chess::Player pla
         }
     }
 
-    // TODO(Tejas): Castling Here...
+    generateCastlingMoves(board, player, move_list);
 }
 
 BitBoard PseudoLegal::convertMoveListToBitBoard(const MoveList &move_list) {
@@ -475,65 +591,18 @@ BitBoard PseudoLegal::convertMoveListToBitBoard(const MoveList &move_list) {
     return move_bb;
 }
 
- // TODO(Tejas): This is a pretty expensive function, we can optimize it by
- // doing some sort of incremental attack detection. For example, when we make a
- // move, we can check if it opens up an attack on the king, or if it moves the
- // king into check, etc. This way we don't have to
 bool Legal::inCheck(const Chess::Board *board, Chess::Player player) {
 
     Chess::Player enemy = (player == Chess::Player::LIGHT)
                         ? Chess::Player::DARK
                         : Chess::Player::LIGHT;
 
-    // 1. Get king square
     BitBoard king_bb = board->getPiecesOfType(Chess::Piece::KING, player);
     int king_idx = Base::popLSB(king_bb);
     Chess::Square king_sq(king_idx);
 
-    BitBoard occ = board->getOccupied(Chess::Player::LIGHT) |
-                   board->getOccupied(Chess::Player::DARK);
-
-    // 2. Pawn attacks
-    BitBoard enemy_pawns = board->getPiecesOfType(Chess::Piece::PAWN, enemy);
-    while (enemy_pawns) {
-        int sq_idx = Base::popLSB(enemy_pawns);
-        if (Attack::pawnAttacks(Chess::Square(sq_idx), enemy) & (1ULL << king_idx))
-            return true;
-    }
-
-    // 3. Knight attacks
-    BitBoard enemy_knights = board->getPiecesOfType(Chess::Piece::KNIGHT, enemy);
-    while (enemy_knights) {
-        int sq_idx = Base::popLSB(enemy_knights);
-        if (Attack::knightAttacks(Chess::Square(sq_idx)) & (1ULL << king_idx))
-            return true;
-    }
-
-    // 4. Bishop / Queen (diagonals)
-    BitBoard enemy_bishops = board->getPiecesOfType(Chess::Piece::BISHOP, enemy) |
-                            board->getPiecesOfType(Chess::Piece::QUEEN, enemy);
-
-    while (enemy_bishops) {
-        int sq_idx = Base::popLSB(enemy_bishops);
-        if (Attack::bishopAttacks(Chess::Square(sq_idx), occ) & (1ULL << king_idx))
-            return true;
-    }
-
-    // 5. Rook / Queen (straight)
-    BitBoard enemy_rooks = board->getPiecesOfType(Chess::Piece::ROOK, enemy) |
-                          board->getPiecesOfType(Chess::Piece::QUEEN, enemy);
-
-    while (enemy_rooks) {
-        int sq_idx = Base::popLSB(enemy_rooks);
-        if (Attack::rookAttacks(Chess::Square(sq_idx), occ) & (1ULL << king_idx))
-            return true;
-    }
-
-    // 6. King attacks (important edge case)
-    BitBoard enemy_king = board->getPiecesOfType(Chess::Piece::KING, enemy);
-    int enemy_king_idx = Base::popLSB(enemy_king);
-
-    if (Attack::kingAttacks(Chess::Square(enemy_king_idx)) & (1ULL << king_idx))
+    BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
+    if (enemy_attacks & (1ULL << king_idx))
         return true;
 
     return false;

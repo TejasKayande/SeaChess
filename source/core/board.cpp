@@ -1,6 +1,7 @@
 
 #include "board.hpp"
 #include <sstream>
+#include <bitset>
 
 using namespace Chess;
 
@@ -24,13 +25,13 @@ void Board::setFen(const std::string& fen) {
     _lOccupied = _dOccupied = 0;
 
     std::istringstream ss(fen);
-    std::string boardPart, turnPart;
-    ss >> boardPart >> turnPart;
+    std::string board_part, turn_part;
+    ss >> board_part >> turn_part;
 
     int rank = 7;
     int file = 0;
 
-    for (char c : boardPart) {
+    for (char c : board_part) {
         if (c == '/') {
             rank--;
             file = 0;
@@ -70,7 +71,7 @@ void Board::setFen(const std::string& fen) {
         file++;
     }
 
-    _turn = (turnPart == "w" ? Player::LIGHT : Player::DARK);
+    _turn = (turn_part == "w" ? Player::LIGHT : Player::DARK);
 }
 
 std::string Board::getFen() const {
@@ -208,6 +209,7 @@ void Board::removePieceAt(const Square& sq) {
     _dQueen  &= mask;
     _dKing   &= mask;
 
+
     _updateOccupancy();
 }
 
@@ -237,6 +239,9 @@ void Board::reset() {
     _dQueen  = 0x1000000000000000;
     _dKing   = 0x0800000000000000;
 
+    _castling_rights = 0x00 | CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE | 
+                       CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE;
+
     _updateOccupancy();
 
     _turn = Player::LIGHT;
@@ -246,15 +251,67 @@ bool Board::makeMove(const Move& m) {
 
     bool move_made = false;
 
+    Piece moving_piece = getPieceAt(m.from);
+
+    if (moving_piece.isEmpty() || moving_piece.color() != getTurn()) return false;
+
     if (
         m.type == MoveType::CAPTURE || 
-        m.type == MoveType::QUIET || 
+        m.type == MoveType::QUIET ||
         m.type == MoveType::DOUBLE_PAWN_PUSH
-       )
+       ) 
     {
-        Piece pc = getPieceAt(m.from);
         setPieceAt(m.from, Piece::nopiece());
-        setPieceAt(m.to, pc);
+        setPieceAt(m.to, moving_piece);
+
+        if (moving_piece.type() == PType::KING) {
+            _castling_rights &= (moving_piece.color() == PColor::LIGHT) ? 
+                                ~(CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE)
+                              : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
+        }
+
+        if (moving_piece.type() == PType::ROOK) {
+            if (m.from == Square(0, 0))      _castling_rights &= ~CastlingRights::LIGHT_KING_SIDE;  // a1
+            else if (m.from == Square(0, 7)) _castling_rights &= ~CastlingRights::LIGHT_QUEEN_SIDE; // h1
+            else if (m.from == Square(7, 0)) _castling_rights &= ~CastlingRights::DARK_KING_SIDE;   // a8
+            else if (m.from == Square(7, 7)) _castling_rights &= ~CastlingRights::DARK_QUEEN_SIDE;  // h8
+        }
+
+        return true;
+    }
+
+    if (m.type == MoveType::KING_CASTLE) {
+
+        setPieceAt(m.from, Piece::nopiece());
+        setPieceAt(m.to, moving_piece);
+
+        if (m.to == Square(0, 1)) {
+            setPieceAt(Square(0, 0), Piece::nopiece());
+            setPieceAt(Square(0, 2), Piece(PType::ROOK, PColor::LIGHT));
+        }
+
+        if (m.to == Square(7, 1)) {
+            setPieceAt(Square(7, 0), Piece::nopiece());
+            setPieceAt(Square(7, 2), Piece(PType::ROOK, PColor::DARK));
+        }
+
+        return true;
+    }
+
+    if (m.type == MoveType::QUEEN_CASTLE) {
+
+        setPieceAt(m.from, Piece::nopiece());
+        setPieceAt(m.to, moving_piece);
+
+        if (m.to == Square(0, 5)) {
+            setPieceAt(Square(0, 7), Piece::nopiece());
+            setPieceAt(Square(0, 4), Piece(PType::ROOK, PColor::LIGHT));
+        } 
+
+        if (m.to == Square(7, 5)) {
+            setPieceAt(Square(7, 7), Piece::nopiece());
+            setPieceAt(Square(7, 4), Piece(PType::ROOK, PColor::DARK));
+         }
 
         return true;
     }
@@ -283,4 +340,9 @@ BitBoard Board::getPiecesOfType(PType type, Player p) const {
         case PType::KING:   return (p == Player::LIGHT) ? _lKing : _dKing;
         default: return 0;
     }
+}
+
+u8 Board::getCastlingRights() const { 
+
+    return _castling_rights; 
 }

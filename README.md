@@ -43,6 +43,7 @@ Handles raw geometric movement independent of game rules:
   * Pawn
   * Knight
   * King
+
 * Dynamic attack generation for sliding pieces:
 
   * Bishop
