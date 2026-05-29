@@ -421,8 +421,6 @@ void PseudoLegal::generatePawnMoves(const Chess::Board *board, Chess::Player pla
 
 void PseudoLegal::generateKnightMoves(const Chess::Board *board, Chess::Player player, MoveList &move_list) {
 
-    // TODO(Tejas): should we use Turn or Pass Player explicitly here?..
-
     Chess::Player enemy = (player == Chess::Player::LIGHT) ? Chess::Player::DARK : Chess::Player::LIGHT;
 
     BitBoard knights = board->getPiecesOfType(Chess::Piece::KNIGHT, player);
@@ -454,8 +452,6 @@ void PseudoLegal::generateKnightMoves(const Chess::Board *board, Chess::Player p
 }
 
 void PseudoLegal::generateBishopMoves(const Chess::Board *board, Chess::Player player, MoveList &move_list) {
-
-    // TODO(Tejas): should we use Turn or Pass Player explicitly here?..
 
     Chess::Player enemy = (player == Chess::Player::LIGHT) ? Chess::Player::DARK : Chess::Player::LIGHT;
 

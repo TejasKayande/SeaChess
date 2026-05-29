@@ -28,7 +28,6 @@ unsigned long perftest(Chess::Board *board, int depth) {
     return nodes;
 }
 
-
 TEST(MoveGen, PerftTest) {
 
     MoveGen::init();

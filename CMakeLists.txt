@@ -12,6 +12,7 @@ enable_testing()
 add_library(chess_core
     source/core/board.cpp
     source/core/movegen.cpp
+    source/core/perft.cpp
 )
 
 add_executable(${PROJECT_NAME}
