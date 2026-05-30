@@ -68,6 +68,11 @@ void GameState::update() {
                                 m_board->changeTurn();
                             }
                             m_visual->selected_square = Chess::Square::invalid();
+
+
+                            if (MoveGen::Legal::isCheckmate(m_board, m_board->getTurn())) {
+                                std::cout << "Checkmate! Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Light" : "Dark") << " wins!" << std::endl;
+                            }
                             break;
                         }
                     }
@@ -82,9 +87,6 @@ void GameState::update() {
         m_visual->legal_squares = 0;
     }
 
-    if (MoveGen::Legal::inCheck(m_board, m_board->getTurn())) {
-        std::cout << "Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Light" : "Dark") << " is in Check!" << std::endl;
-    }
 }
 
 void GameState::render() {

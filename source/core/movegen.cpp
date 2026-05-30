@@ -593,6 +593,22 @@ BitBoard PseudoLegal::convertMoveListToBitBoard(const MoveList &move_list) {
     return move_bb;
 }
 
+bool Legal::isCheckmate(const Chess::Board *board, Chess::Player player) {
+
+    // TODO(Tejas): There has to be a better way to do this...
+
+    Chess::Player enemy = (player == Chess::Player::LIGHT)
+                        ? Chess::Player::DARK
+                        : Chess::Player::LIGHT;
+
+    if (!inCheck(board, player)) return false;
+
+    MoveList legal_moves;
+    Legal::generateAllMoves(board, legal_moves);
+
+    return legal_moves.empty();
+}
+
 bool Legal::inCheck(const Chess::Board *board, Chess::Player player) {
 
     Chess::Player enemy = (player == Chess::Player::LIGHT)

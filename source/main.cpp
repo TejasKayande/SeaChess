@@ -21,7 +21,7 @@ TODO(Tejas):
 - [ ] Add Board themes and menu for selecting them.
 */
 
-#define RUN_PERFTEST 1
+#define RUN_PERFTEST 0
 
 #if RUN_PERFTEST
 #include "core/perft.hpp"

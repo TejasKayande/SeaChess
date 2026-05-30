@@ -45,7 +45,9 @@ namespace MoveGen {
 
     namespace Legal {
 
-        bool inCheck(const Chess::Board *board, Chess::Player p);
+        bool isCheckmate(const Chess::Board *board, Chess::Player player);
+
+        bool inCheck(const Chess::Board *board, Chess::Player player);
 
         void generateAllMoves(const Chess::Board *board, MoveList &move_list);
         void generateMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
