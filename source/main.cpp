@@ -48,8 +48,8 @@ auto main(void) -> int {
         if (runPerftest()) exit(0);
     }
 
-    ::SetTraceLogLevel(LOG_ERROR);
     ::InitWindow(Window::WINDOW_WIDTH, Window::WINDOW_HEIGHT, "Chess");
+    ::InitAudioDevice();
 
     State::GameState *gs = new State::GameState();
 

@@ -28,6 +28,11 @@ namespace State {
 
         // NOTE(Tejas): List of current legal moves for the selected piece, if any.
         MoveList m_move_list; 
+
+        // TODO(Tejas): CleanUp
+        ::Sound m_move_sound;
+        ::Sound m_capture_sound;
+        ::Sound m_castle_sound;
     };
 
 } // namespace Game

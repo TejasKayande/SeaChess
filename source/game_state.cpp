@@ -12,9 +12,17 @@ GameState::GameState() {
 
     Render::initAssets();
     MoveGen::init();
+
+    m_move_sound    = ::LoadSound("../assets/sound/move.wav");
+    m_capture_sound = ::LoadSound("../assets/sound/capture.wav");
+    m_castle_sound  = ::LoadSound("../assets/sound/castle.wav");
 }
 
 GameState::~GameState() {
+
+    UnloadSound(m_castle_sound);
+    UnloadSound(m_capture_sound);
+    UnloadSound(m_move_sound);
 
     Render::deinitAssets();
 
@@ -66,6 +74,14 @@ void GameState::update() {
                             if (m_board->makeMove(move)) {
                                 m_visual->legal_squares = 0;
                                 m_board->changeTurn();
+
+                                if (move.type == Move::KING_CASTLE || move.type == Move::QUEEN_CASTLE) {
+                                    ::PlaySound(m_castle_sound);
+                                } else if (move.type == Move::CAPTURE || move.type == Move::PROMO_CAPTURE_KNIGHT || move.type == Move::PROMO_CAPTURE_BISHOP || move.type == Move::PROMO_CAPTURE_ROOK || move.type == Move::PROMO_CAPTURE_QUEEN) {
+                                    ::PlaySound(m_capture_sound);
+                                } else {
+                                    ::PlaySound(m_move_sound);
+                                }
                             }
                             m_visual->selected_square = Chess::Square::invalid();
 
