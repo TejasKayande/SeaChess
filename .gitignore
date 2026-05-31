@@ -1,2 +1,6 @@
 build/
 .vscode/
+
+build.bat
+run.bat
+test.bat
