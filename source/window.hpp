@@ -9,7 +9,6 @@
 
 namespace Window {
 
-    // NOTE(Tejas): This is so that in the future if we want to remove raylib
     using Section = Rectangle;
 
     enum SectionID {
@@ -23,7 +22,7 @@ namespace Window {
     constexpr int TEXTURE_SIZE = 80;
     constexpr int SQUARE_DIM   = TEXTURE_SIZE; 
     constexpr int BOARD_SIZE   = SQUARE_DIM * 8;
-#if 1
+#if 0
     constexpr int INFORMATION_WIDTH  = BOARD_SIZE / 2;
     constexpr int INFORMATION_HEIGHT = BOARD_SIZE + INFORMATION_WIDTH;
 

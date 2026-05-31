@@ -118,6 +118,38 @@ namespace { // Anonymous namespace for helper functions
 
         if (tex) ::DrawTexture(*tex, px, py, WHITE);
     }
+
+    void renderPieceAtMouse(const Window::Section &area, const Chess::Piece &pc) {
+
+        int mouse_x = ::GetMouseX();
+        int mouse_y = ::GetMouseY();
+
+        const ::Texture2D* tex = nullptr;
+
+        if (pc.color() == Chess::Piece::LIGHT) {
+            switch (pc.type()) {
+            case Chess::Piece::PAWN:   tex = &G_assets.lPawn;   break;
+            case Chess::Piece::KNIGHT: tex = &G_assets.lKnight; break;
+            case Chess::Piece::BISHOP: tex = &G_assets.lBishop; break;
+            case Chess::Piece::ROOK:   tex = &G_assets.lRook;   break;
+            case Chess::Piece::QUEEN:  tex = &G_assets.lQueen;  break;
+            case Chess::Piece::KING:   tex = &G_assets.lKing;   break;
+            default: break;
+            }
+        } else if (pc.color() == Chess::Piece::DARK) {
+            switch (pc.type()) {
+            case Chess::Piece::PAWN:   tex = &G_assets.dPawn;   break;
+            case Chess::Piece::KNIGHT: tex = &G_assets.dKnight; break;
+            case Chess::Piece::BISHOP: tex = &G_assets.dBishop; break;
+            case Chess::Piece::ROOK:   tex = &G_assets.dRook;   break;
+            case Chess::Piece::QUEEN:  tex = &G_assets.dQueen;  break;
+            case Chess::Piece::KING:   tex = &G_assets.dKing;   break;
+            default: break;
+            }
+        }
+
+        if (tex) ::DrawTexture(*tex, mouse_x - Window::SQUARE_DIM / 2, mouse_y - Window::SQUARE_DIM / 2, WHITE);
+    }
 } // Anonymous namespace
 
 void Render::initAssets() {
@@ -195,8 +227,13 @@ void Render::renderBoard(const Window::Section &area, const Chess::Board *board,
                 renderSquareHighlight(area, sq, visual->is_board_flipped, ::Color{255, 0, 255, 200});
 
             Chess::Piece pc  = board->getPieceAt(sq);
-            renderPieceOnSquare(area, sq, pc, visual->is_board_flipped);
+            if (sq != visual->selected_square) renderPieceOnSquare(area, sq, pc, visual->is_board_flipped);
         }
+    }
+
+    if (visual->selected_square.isValid()) {
+        Chess::Piece pc  = board->getPieceAt(visual->selected_square);
+        renderPieceAtMouse(area, pc);
     }
 }
 
