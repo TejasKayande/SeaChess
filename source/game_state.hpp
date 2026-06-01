@@ -9,6 +9,8 @@
 #include "core/movegen.hpp"
 #include "render.hpp"
 
+#include <raylib.h>
+
 namespace State {
 
     class GameState {

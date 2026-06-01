@@ -16,6 +16,8 @@ GameState::GameState() {
     m_move_sound    = ::LoadSound("../assets/sound/move.wav");
     m_capture_sound = ::LoadSound("../assets/sound/capture.wav");
     m_castle_sound  = ::LoadSound("../assets/sound/castle.wav");
+
+    m_board->setFen("8/8/8/3pP3/8/8/8/8 w - d6 0 1");
 }
 
 GameState::~GameState() {
@@ -75,16 +77,30 @@ void GameState::update() {
                                 m_visual->legal_squares = 0;
                                 m_board->changeTurn();
 
-                                if (move.type == Move::KING_CASTLE || move.type == Move::QUEEN_CASTLE) {
-                                    ::PlaySound(m_castle_sound);
-                                } else if (move.type == Move::CAPTURE || move.type == Move::PROMO_CAPTURE_KNIGHT || move.type == Move::PROMO_CAPTURE_BISHOP || move.type == Move::PROMO_CAPTURE_ROOK || move.type == Move::PROMO_CAPTURE_QUEEN) {
-                                    ::PlaySound(m_capture_sound);
-                                } else {
-                                    ::PlaySound(m_move_sound);
+                                switch (move.type) {
+                                    case Move::KING_CASTLE:
+                                    case Move::QUEEN_CASTLE: {
+                                        ::PlaySound(m_castle_sound);
+                                        
+                                    } break;
+
+                                    case Move::CAPTURE:
+                                    case Move::PROMO_CAPTURE_KNIGHT:
+                                    case Move::PROMO_CAPTURE_BISHOP:
+                                    case Move::PROMO_CAPTURE_ROOK:
+                                    case Move::PROMO_CAPTURE_QUEEN:
+                                    case Move::EN_PASSANT: {
+                                        ::PlaySound(m_capture_sound);
+                                    } break;
+
+                                    default: {
+                                        ::PlaySound(m_move_sound);
+                                        break;
+                                    } break;
                                 }
                             }
-                            m_visual->selected_square = Chess::Square::invalid();
 
+                            m_visual->selected_square = Chess::Square::invalid();
 
                             if (MoveGen::Legal::isCheckmate(m_board, m_board->getTurn())) {
                                 std::cout << "Checkmate! Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Light" : "Dark") << " wins!" << std::endl;

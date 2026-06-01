@@ -31,6 +31,13 @@ namespace Chess {
         constexpr static Square invalid() { return Square(INVALID, INVALID); }
 
         constexpr u8 toIndex() const { return index; }
+
+        constexpr std::string toString() const {
+            if (!isValid()) return "Invalid Square";
+            char file_char = 'h' - file();
+            char rank_char = '1' + rank();
+            return std::string() + file_char + rank_char;
+         }
     };
 
 } // namespace Chess

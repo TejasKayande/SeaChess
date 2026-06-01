@@ -20,26 +20,33 @@ void Board::_updateOccupancy() {
 
 void Board::setFen(const std::string& fen) {
 
+    // NOTE(Tejas): The 0, 0 Square is h1 and the 7, 7 Square is a8
+
+    reset();
+
     _lPawn = _lKnight = _lBishop = _lRook = _lQueen = _lKing = 0;
     _dPawn = _dKnight = _dBishop = _dRook = _dQueen = _dKing = 0;
     _lOccupied = _dOccupied = 0;
+    _castling_rights = 0;
+    _turn = Player::LIGHT;
 
     std::istringstream ss(fen);
-    std::string board_part, turn_part;
-    ss >> board_part >> turn_part;
+    std::string board_part, turn_part, castle_part, en_passant_part;
+    ss >> board_part >> turn_part >> castle_part >> en_passant_part;
 
     int rank = 7;
-    int file = 0;
+    int file = 7;
 
     for (char c : board_part) {
+
         if (c == '/') {
             rank--;
-            file = 0;
+            file = 7;
             continue;
         }
 
-        if (isdigit(c)) {
-            file += c - '0';
+        if (std::isdigit(c)) {
+            file -= (c - '0');
             continue;
         }
 
@@ -61,17 +68,34 @@ void Board::setFen(const std::string& fen) {
             case 'q': piece = Piece(PType::QUEEN,  PColor::DARK); break;
             case 'k': piece = Piece(PType::KING,   PColor::DARK); break;
 
-            default: break;
+            default: continue;
         }
 
-        if (!piece.isEmpty()) {
-            setPieceAt(sq, piece);
-        }
+        setPieceAt(sq, piece);
 
-        file++;
+        file--;
     }
 
-    _turn = (turn_part == "w" ? Player::LIGHT : Player::DARK);
+    if (!turn_part.empty())
+        _turn = (turn_part == "w" ? Player::LIGHT : Player::DARK);
+
+    if (!castle_part.empty()) {
+        if (castle_part.find('K') != std::string::npos) _castling_rights |= CastlingRights::LIGHT_KING_SIDE;
+        if (castle_part.find('Q') != std::string::npos) _castling_rights |= CastlingRights::LIGHT_QUEEN_SIDE;
+        if (castle_part.find('k') != std::string::npos) _castling_rights |= CastlingRights::DARK_KING_SIDE;
+        if (castle_part.find('q') != std::string::npos) _castling_rights |= CastlingRights::DARK_QUEEN_SIDE;
+    }
+
+    if (!en_passant_part.empty() && !(en_passant_part == "-")) {
+
+        char file_char = en_passant_part[0];
+        char rank_char = en_passant_part[1];
+
+        int ep_file = 7 - (file_char - 'a');
+        int ep_rank = rank_char - '1';
+
+        _en_passant_target = Square(ep_rank, ep_file);
+    }
 }
 
 std::string Board::getFen() const {

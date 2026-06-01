@@ -52,8 +52,8 @@ void PerfTest::divide(Chess::Board* board, int depth) {
 
             total += nodes;
 
-            std::cout << char('a' + move.from.file()) << char('1' + move.from.rank())
-                      << char('a' + move.to.file()) << char('1' + move.to.rank())
+            std::cout << move.from.toString()
+                      << move.to.toString()
                       << ": " << nodes << "\n";
         }
     }
