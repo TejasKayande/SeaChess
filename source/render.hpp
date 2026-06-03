@@ -6,6 +6,8 @@
 #include "core/piece.hpp"
 #include "core/board.hpp"
 
+#include "menu.hpp"
+
 #include <raylib.h>
 
 struct Theme {
@@ -89,8 +91,7 @@ namespace Render {
 
     void renderBoard(const Window::Section &area, const Visual &visual);
 
-    // void renderBoard(const Window::Section &area, const Chess::Board *board, const Visual *visual);
-    void renderMenu(const Window::Section &area);
+    void renderMenu(const Window::Section &area, const Menu::MenuState menu);
     void renderInfo(const Window::Section &area);
     void renderStatus(const Window::Section &area);
 

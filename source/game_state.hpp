@@ -9,6 +9,8 @@
 #include "core/movegen.hpp"
 #include "render.hpp"
 
+#include "menu.hpp"
+
 #include <raylib.h>
 
 namespace State {
@@ -38,6 +40,8 @@ namespace State {
         ::Sound m_move_sound;
         ::Sound m_capture_sound;
         ::Sound m_castle_sound;
+
+        Menu::MenuState m_menu; // Stack or Heap? IDK
 
     private:
         Render::Visual _buildVisual();

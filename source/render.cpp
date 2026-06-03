@@ -261,13 +261,34 @@ void Render::renderBoard(const Window::Section &area, const Visual &visual) {
     }
 }
 
-void Render::renderMenu(const Window::Section &area) {
+void Render::renderMenu(const Window::Section &area, const Menu::MenuState menu) {
+
+    int line_gap = 100;
 
     Window::Section menu_section = Window::getMenuSection();
     ::DrawTextEx(G_assets.inter_regular_50, "Menu",
                  Vector2{ (float)menu_section.width / 2 - 50, (float)50 },
                  50, 2, ::Color({0, 255, 255, 255}));
     ::DrawRectangleRec(area, theme.menu_bg);
+
+    ::Color text_color = ::Color(255, 255, 255, 230);
+    int i = 1;
+    for (std::string item : menu.getItems()) {
+
+        ::Color text_color = ::Color({0, 255, 255, 255});
+
+        // TODO(Tejas): This is a disgrace...
+        if (i - 1 == menu.getPtr()) {
+
+            text_color = ::Color({255, 0, 255, 255});
+        }
+
+        // NOTE(Tejas): This is going to be ugly as I dont know rn how Im going to center align these.
+        ::DrawTextEx(G_assets.inter_regular_24, item.c_str(),
+                     Vector2{ (float)menu_section.width / 2 - 50 + ((item.length() * 7) / 4), (float)50 + (line_gap * i)},
+                     24, 2, text_color);
+        i++;
+    }
 }
 
 void Render::renderInfo(const Window::Section &area) {

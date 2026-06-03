@@ -51,6 +51,11 @@ void GameState::update() {
     if (::IsKeyPressed(KEY_X)) Window::toggleMenu();
     if (::IsKeyPressed(KEY_F)) m_is_board_flipped = !m_is_board_flipped;
 
+    if (Window::isOnMenu()) {
+        if (::IsKeyPressed(KEY_UP)) m_menu.recedeSelection();
+        if (::IsKeyPressed(KEY_DOWN)) m_menu.advanceSelection();
+    }
+
     if (::IsMouseButtonPressed(0)) {
 
         int x = ::GetMouseX();
@@ -131,7 +136,7 @@ void GameState::render() {
 
     if (Window::isOnMenu()) {
 
-        Render::renderMenu(Window::getMenuSection());
+        Render::renderMenu(Window::getMenuSection(), m_menu);
 
     } else {
 
