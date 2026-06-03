@@ -45,7 +45,7 @@ bool runPerftest() {
 auto main(void) -> int {
 
     {
-        if (runPerftest()) exit(0);
+        if (runPerftest()) return 0;
     }
 
     ::InitWindow(Window::WINDOW_WIDTH, Window::WINDOW_HEIGHT, "Chess");

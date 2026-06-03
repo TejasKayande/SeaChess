@@ -1,6 +1,10 @@
 
 #include "game_state.hpp"
 
+#include "../assets/sound/move.h"
+#include "../assets/sound/capture.h"
+#include "../assets/sound/castle.h"
+
 using namespace State;
 
 GameState::GameState() {
@@ -15,9 +19,17 @@ GameState::GameState() {
     Render::initAssets();
     MoveGen::init();
 
-    m_move_sound    = ::LoadSound("../assets/sound/move.wav");
-    m_capture_sound = ::LoadSound("../assets/sound/capture.wav");
-    m_castle_sound  = ::LoadSound("../assets/sound/castle.wav");
+    ::Wave move_wav    = ::LoadWaveFromMemory(".wav", __move_wav, __move_wav_len);
+    ::Wave capture_wav = ::LoadWaveFromMemory(".wav", __capture_wav, __capture_wav_len);
+    ::Wave castle_wav  = ::LoadWaveFromMemory(".wav", __castle_wav, __castle_wav_len);
+
+    m_move_sound    = ::LoadSoundFromWave(move_wav);
+    m_capture_sound = ::LoadSoundFromWave(capture_wav);
+    m_castle_sound  = ::LoadSoundFromWave(castle_wav);
+
+    UnloadWave(move_wav);
+    UnloadWave(capture_wav);
+    UnloadWave(castle_wav);
 }
 
 GameState::~GameState() {
@@ -123,32 +135,41 @@ void GameState::render() {
 
     } else {
 
-        Render::Visual visual = { };
-        visual.theme = Themes::EMERALD;
-        visual.show_legal = true;
-        visual.show_sel   = true;
-        visual.show_check = true;
+        Render::Visual visual = _buildVisual();
 
-        BitBoard legal_bb = MoveGen::convertMoveListToBitBoard(m_move_list);
-
-        if (m_is_board_flipped) {
-            Chess::Square flipped_sel_square = Chess::Square((Chess::MAX_RANK - 1) - m_sel_square.rank(), (Chess::MAX_FILE - 1) - m_sel_square.file());
-            BitBoard flipped_legal_bb = MoveGen::flipBitBoard(legal_bb);
-            for (int i = 0, idx = (Chess::MAX_RANK * Chess::MAX_FILE) - 1; i < Chess::MAX_RANK * Chess::MAX_FILE; i++, idx--) {
-                visual.board[idx].piece = m_board->getPieceAt(Chess::Square(i));
-                if (Chess::Square(i) == flipped_sel_square) visual.board[i].flag |= Render::SELECTED;
-                if (flipped_legal_bb & (1ULL << i)) visual.board[i].flag |= Render::LEGAL;
-            }
-        } else {
-            for (int i = 0; i < Chess::MAX_RANK * Chess::MAX_FILE; i++) {
-                visual.board[i].piece = m_board->getPieceAt(Chess::Square(i));
-                if (Chess::Square(i) == m_sel_square) visual.board[i].flag |= Render::SELECTED;
-                if (legal_bb & (1ULL << i)) visual.board[i].flag |= Render::LEGAL;
-            }
-        }
-
-        Render::renderBoard(Window::getBoardSection(), &visual);
+        Render::renderBoard(Window::getBoardSection(), visual);
         Render::renderStatus(Window::getStatusSection());
         Render::renderInfo(Window::getInformationSection());
     }
+}
+
+Render::Visual GameState::_buildVisual() {
+
+    Render::Visual visual = { };
+    visual.theme = Themes::EMERALD;
+    visual.show_legal = true;
+    visual.show_sel   = true;
+    visual.show_check = true;
+
+    BitBoard legal_bb = MoveGen::convertMoveListToBitBoard(m_move_list);
+    int idx = 0, didx = 1;
+    Chess::Square sel_square = m_sel_square;
+    if (m_is_board_flipped) {
+        legal_bb = MoveGen::flipBitBoard(legal_bb);
+        idx = (Chess::MAX_RANK * Chess::MAX_FILE) - 1;
+        didx = -1;
+        sel_square = Chess::Square((Chess::MAX_RANK - 1) - m_sel_square.rank(), (Chess::MAX_FILE - 1) - m_sel_square.file());
+    }
+
+    for (int i = 0; i < Chess::MAX_RANK * Chess::MAX_FILE; i++, idx += didx) {
+        Chess::Square sq(i);
+        visual.board[idx].piece = m_board->getPieceAt(sq);
+        visual.board[idx].rank = sq.rank();
+        visual.board[idx].file = sq.file();
+
+        if (sq == sel_square) visual.board[i].flag |= Render::SELECTED;
+        if (legal_bb & (1ULL << i)) visual.board[i].flag |= Render::LEGAL;
+    }
+
+    return visual;
 }

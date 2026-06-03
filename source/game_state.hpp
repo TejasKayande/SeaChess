@@ -33,14 +33,14 @@ namespace State {
         // NOTE(Tejas): List of current legal moves for the selected piece, if any.
         MoveList m_move_list; 
 
-        // TODO(Tejas): CleanUp
+        // TODO(Tejas): Im not sure if this belongs here, and if not I dont know
+        //              where it should go.
         ::Sound m_move_sound;
         ::Sound m_capture_sound;
         ::Sound m_castle_sound;
 
     private:
-
-        void m_buildVisual();
+        Render::Visual _buildVisual();
     };
 
 } // namespace Game

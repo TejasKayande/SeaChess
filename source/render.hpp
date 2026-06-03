@@ -72,6 +72,7 @@ namespace Render {
 
     struct SquareVisual {
         Chess::Piece piece;
+        int rank, file; // this is for the coords.
         u8 flag;
     };
 
@@ -86,7 +87,7 @@ namespace Render {
     void initAssets();
     void deinitAssets();
 
-    void renderBoard(const Window::Section &area, const Visual *visual);
+    void renderBoard(const Window::Section &area, const Visual &visual);
 
     // void renderBoard(const Window::Section &area, const Chess::Board *board, const Visual *visual);
     void renderMenu(const Window::Section &area);

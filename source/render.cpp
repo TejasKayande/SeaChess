@@ -1,6 +1,22 @@
 
 #include "render.hpp"
 
+#include "../assets/texture/lPawn.h"
+#include "../assets/texture/lKnight.h"
+#include "../assets/texture/lBishop.h"
+#include "../assets/texture/lRook.h"
+#include "../assets/texture/lQueen.h"
+#include "../assets/texture/lKing.h"
+#include "../assets/texture/dPawn.h"
+#include "../assets/texture/dKnight.h"
+#include "../assets/texture/dBishop.h"
+#include "../assets/texture/dRook.h"
+#include "../assets/texture/dQueen.h"
+#include "../assets/texture/dKing.h"
+
+#include "../assets/font/Inter-Regular.h"
+#include "../assets/font/Roboto-Regular.h"
+
 using namespace Render;
 
 // constexpr Theme theme = Themes::DEFAULT;
@@ -44,28 +60,33 @@ namespace { // Anonymous namespace for helper functions
         ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, color);
     }
 
-    void renderSquareCoord(const Window::Section &area, Chess::Square sq, bool is_flipped) {
+    void renderSquareCoord(const Window::Section &area, Chess::Square sq, int rank, int file) {
+
+        // NOTE(Tejas): The Square passed here is just to get the position, it
+        //              has no meaning in terms of actual square, this is just
+        //              for the pixels
 
         if (!sq.isValid()) return;
 
         int px = area.x + sq.file() * Window::SQUARE_DIM;
         int py = area.y + sq.rank() * Window::SQUARE_DIM;
 
+        int offset_from_square = 5; // in pixels
+
         ::Color text_color =  ((sq.rank() + sq.file()) % 2 == 0) ? theme.board_light : theme.board_dark;
-        int xx = px + 5;
-        int yy = py + 5;
-        if (sq.file() == 0) {
-            std::string ch;
-            if (!is_flipped) ch = std::to_string(sq.rank() + 1);
-            else ch = std::to_string(Chess::MAX_RANK - sq.rank());
+        int xx = px + offset_from_square;
+        int yy = py + offset_from_square;
+
+        if (file == 0) {
+            std::string ch = std::to_string(sq.rank() + 1);
             ::DrawTextEx(G_assets.inter_regular_24, ch.c_str(), Vector2{(float)xx, (float)yy}, 24, 2, text_color);
         }
-        if (sq.rank() == 7) {
+
+        if (rank == 7) {
             xx = px + Window::SQUARE_DIM - 15;
             yy = py + Window::SQUARE_DIM - 25;
             char ch[2] = { '\0' };
-            if (is_flipped) ch[0] = (char)(sq.file() + 'a');
-            else ch[0] = (char)('h' - sq.file());
+            ch[0] = (char)('h' - file);
             ::DrawTextEx(G_assets.inter_regular_24, ch, Vector2{(float)xx, (float)yy}, 24, 2, text_color);
         }
     }
@@ -142,23 +163,52 @@ namespace { // Anonymous namespace for helper functions
 } // Anonymous namespace
 
 void Render::initAssets() {
+
+    ::Image lPawn_img    = ::LoadImageFromMemory(".png", lPawn_png  , lPawn_png_len);
+    ::Image lKnight_img  = ::LoadImageFromMemory(".png", lKnight_png, lKnight_png_len);
+    ::Image lBishop_img  = ::LoadImageFromMemory(".png", lBishop_png, lBishop_png_len);
+    ::Image lRook_img    = ::LoadImageFromMemory(".png", lRook_png  , lRook_png_len);
+    ::Image lQueen_img   = ::LoadImageFromMemory(".png", lQueen_png , lQueen_png_len);
+    ::Image lKing_img    = ::LoadImageFromMemory(".png", lKing_png  , lKing_png_len);
+
+    ::Image dPawn_img    = ::LoadImageFromMemory(".png", dPawn_png  , dPawn_png_len);
+    ::Image dKnight_img  = ::LoadImageFromMemory(".png", dKnight_png, dKnight_png_len);
+    ::Image dBishop_img  = ::LoadImageFromMemory(".png", dBishop_png, dBishop_png_len);
+    ::Image dRook_img    = ::LoadImageFromMemory(".png", dRook_png  , dRook_png_len);
+    ::Image dQueen_img   = ::LoadImageFromMemory(".png", dQueen_png , dQueen_png_len);
+    ::Image dKing_img    = ::LoadImageFromMemory(".png", dKing_png  , dKing_png_len);
     
-    G_assets.lPawn   = ::LoadTexture("../assets/texture/lPawn.png");
-    G_assets.lKnight = ::LoadTexture("../assets/texture/lKnight.png");
-    G_assets.lBishop = ::LoadTexture("../assets/texture/lBishop.png");
-    G_assets.lRook   = ::LoadTexture("../assets/texture/lRook.png");
-    G_assets.lQueen  = ::LoadTexture("../assets/texture/lQueen.png");
-    G_assets.lKing   = ::LoadTexture("../assets/texture/lKing.png");
+    G_assets.lPawn   = ::LoadTextureFromImage(lPawn_img);
+    G_assets.lKnight = ::LoadTextureFromImage(lKnight_img);
+    G_assets.lBishop = ::LoadTextureFromImage(lBishop_img);
+    G_assets.lRook   = ::LoadTextureFromImage(lRook_img);
+    G_assets.lQueen  = ::LoadTextureFromImage(lQueen_img);
+    G_assets.lKing   = ::LoadTextureFromImage(lKing_img);
 
-    G_assets.dPawn   = ::LoadTexture("../assets/texture/dPawn.png");
-    G_assets.dKnight = ::LoadTexture("../assets/texture/dKnight.png");
-    G_assets.dBishop = ::LoadTexture("../assets/texture/dBishop.png");
-    G_assets.dRook   = ::LoadTexture("../assets/texture/dRook.png");
-    G_assets.dQueen  = ::LoadTexture("../assets/texture/dQueen.png");
-    G_assets.dKing   = ::LoadTexture("../assets/texture/dKing.png");
+    G_assets.dPawn   = ::LoadTextureFromImage(dPawn_img);
+    G_assets.dKnight = ::LoadTextureFromImage(dKnight_img);
+    G_assets.dBishop = ::LoadTextureFromImage(dBishop_img);
+    G_assets.dRook   = ::LoadTextureFromImage(dRook_img);
+    G_assets.dQueen  = ::LoadTextureFromImage(dQueen_img);
+    G_assets.dKing   = ::LoadTextureFromImage(dKing_img);
 
-    G_assets.inter_regular_24 = LoadFontEx("../assets/font/Inter-Regular.ttf", 24, 0, 0);
-    G_assets.inter_regular_50 = LoadFontEx("../assets/font/Inter-Regular.ttf", 50, 0, 0);
+    G_assets.inter_regular_24 = ::LoadFontFromMemory(".ttf", __Inter_Regular_ttf, __Inter_Regular_ttf_len, 24, nullptr, 0);
+    G_assets.inter_regular_50 = ::LoadFontFromMemory(".ttf", __Roboto_Regular_ttf, __Roboto_Regular_ttf_len, 50, nullptr, 0);
+
+
+    ::UnloadImage(lPawn_img);
+    ::UnloadImage(lKnight_img);
+    ::UnloadImage(lBishop_img);
+    ::UnloadImage(lRook_img);
+    ::UnloadImage(lQueen_img);
+    ::UnloadImage(lKing_img);
+
+    ::UnloadImage(dPawn_img);
+    ::UnloadImage(dKnight_img);
+    ::UnloadImage(dBishop_img);
+    ::UnloadImage(dRook_img);
+    ::UnloadImage(dQueen_img);
+    ::UnloadImage(dKing_img);
 }
 
 void Render::deinitAssets() {
@@ -181,7 +231,7 @@ void Render::deinitAssets() {
     ::UnloadFont(G_assets.inter_regular_50);
 }
 
-void Render::renderBoard(const Window::Section &area, const Visual *visual) {
+void Render::renderBoard(const Window::Section &area, const Visual &visual) {
 
     Chess::Piece piece_on_mouse = Chess::Piece::nopiece();
 
@@ -191,17 +241,19 @@ void Render::renderBoard(const Window::Section &area, const Visual *visual) {
 
         Chess::Square sq(i);
 
-        if (visual->board[i].flag & HighlightType::SELECTED) {
-            renderSquareHighlight(area, sq, visual->theme.highlight);
-            piece_on_mouse = visual->board[i].piece;
-        } else if (visual->board[i].flag & HighlightType::LEGAL)  {
-            renderSquareHighlight(area, sq, visual->theme.legal);
-        } else if (visual->board[i].flag & HighlightType::CHECK) {
-            renderSquareHighlight(area, sq, visual->theme.check);
+        if (visual.board[i].flag & HighlightType::SELECTED) {
+            renderSquareHighlight(area, sq, visual.theme.highlight);
+            piece_on_mouse = visual.board[i].piece;
+        } else if (visual.board[i].flag & HighlightType::LEGAL)  {
+            renderSquareHighlight(area, sq, visual.theme.legal);
+        } else if (visual.board[i].flag & HighlightType::CHECK) {
+            renderSquareHighlight(area, sq, visual.theme.check);
         }
 
-        if (!(visual->board[i].flag & HighlightType::SELECTED)) renderPieceOnSquare(area, sq, visual->board[i].piece);
-        else renderPieceAtMouse(area, visual->board[i].piece);
+        renderSquareCoord(area, sq, visual.board[i].rank, visual.board[i].file);
+
+        if (!(visual.board[i].flag & HighlightType::SELECTED)) renderPieceOnSquare(area, sq, visual.board[i].piece);
+        else renderPieceAtMouse(area, visual.board[i].piece);
     }
 
     if (!piece_on_mouse.isEmpty()) {
