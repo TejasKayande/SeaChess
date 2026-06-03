@@ -3,9 +3,13 @@
 
 using namespace Render;
 
-// TODO(Tejas):
-// - [ ] Refactor renderer to use Base::Color on the API.
+// constexpr Theme theme = Themes::DEFAULT;
+// constexpr Theme theme = Themes::CLASSIC_WOOD;
+constexpr Theme theme = Themes::SLATE_BLUE;
+// constexpr Theme theme = Themes::EMERALD;
 
+
+// TODO(Tejas): Load these directly into the exe
 struct _Assets {
     ::Texture2D lPawn, lKnight, lBishop, lRook, lQueen, lKing;
     ::Texture2D dPawn, dKnight, dBishop, dRook, dQueen, dKing;
@@ -26,25 +30,16 @@ namespace { // Anonymous namespace for helper functions
         int px = area.x + sq.file() * Window::SQUARE_DIM;
         int py = area.y + sq.rank() * Window::SQUARE_DIM;
 
-        ::Color square_color = ((sq.rank() + sq.file()) % 2 == 0) ? ::RAYWHITE : ::DARKBROWN; 
+        ::Color square_color = ((sq.rank() + sq.file()) % 2 == 0) ? theme.board_light : theme.board_dark;
         ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, square_color);
     }
 
-    void renderSquareHighlight(const Window::Section &area, Chess::Square sq, 
-                                        bool is_flipped, ::Color color = ::Color{100, 100, 255, 255}) {
+    void renderSquareHighlight(const Window::Section &area, Chess::Square sq, ::Color color) {
 
         if (!sq.isValid()) return;
 
-        int rank = sq.rank();
-        int file = sq.file();
-
-        if (is_flipped) {
-            rank = (Chess::MAX_RANK - 1) - rank;
-            file = (Chess::MAX_FILE - 1) - file;
-        }
-
-        int px = area.x + file * Window::SQUARE_DIM;
-        int py = area.y + rank * Window::SQUARE_DIM;
+        int px = area.x + sq.file() * Window::SQUARE_DIM;
+        int py = area.y + sq.rank() * Window::SQUARE_DIM;
 
         ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, color);
     }
@@ -56,7 +51,7 @@ namespace { // Anonymous namespace for helper functions
         int px = area.x + sq.file() * Window::SQUARE_DIM;
         int py = area.y + sq.rank() * Window::SQUARE_DIM;
 
-        ::Color text_color =  ((sq.rank() + sq.file()) % 2 == 0) ? ::DARKBROWN : ::RAYWHITE;
+        ::Color text_color =  ((sq.rank() + sq.file()) % 2 == 0) ? theme.board_light : theme.board_dark;
         int xx = px + 5;
         int yy = py + 5;
         if (sq.file() == 0) {
@@ -75,19 +70,13 @@ namespace { // Anonymous namespace for helper functions
         }
     }
 
-    void renderPieceOnSquare(const Window::Section &area, const Chess::Square &sq,
-                                      const Chess::Piece &pc, bool is_flipped) {
+    void renderPieceOnSquare(const Window::Section &area, const Chess::Square &sq, const Chess::Piece &pc) {
 
         if (!sq.isValid()) return;
         if (pc.isEmpty())  return;
 
         int file = sq.file();
         int rank = sq.rank();
-
-        if (is_flipped) {
-            file = (Chess::MAX_FILE - 1) - file;
-            rank = (Chess::MAX_RANK - 1) - rank;
-        }
 
         int px = area.x + file * Window::SQUARE_DIM;
         int py = area.y + rank * Window::SQUARE_DIM;
@@ -154,7 +143,6 @@ namespace { // Anonymous namespace for helper functions
 
 void Render::initAssets() {
     
-    // TODO(Tejas): Free These!
     G_assets.lPawn   = ::LoadTexture("../assets/texture/lPawn.png");
     G_assets.lKnight = ::LoadTexture("../assets/texture/lKnight.png");
     G_assets.lBishop = ::LoadTexture("../assets/texture/lBishop.png");
@@ -193,58 +181,41 @@ void Render::deinitAssets() {
     ::UnloadFont(G_assets.inter_regular_50);
 }
 
-void Render::renderBoard(const Window::Section &area, const Chess::Board *board, const Visual *visual) {
+void Render::renderBoard(const Window::Section &area, const Visual *visual) {
 
-    // FIXME(Tejas): Combine these 2 loops...
+    Chess::Piece piece_on_mouse = Chess::Piece::nopiece();
 
-    for (int rank = 0; rank < Chess::MAX_RANK; rank++) {
+    for (int i = 0; i < Chess::MAX_RANK * Chess::MAX_FILE; i++) {
 
-        for (int file = 0; file < Chess::MAX_FILE; file++) {
+        renderSquareBackgroud(area, Chess::Square(i));
 
-            int x = area.x + file * Window::SQUARE_DIM;
-            int y = area.y + rank * Window::SQUARE_DIM;
+        Chess::Square sq(i);
 
-            Chess::Square sq(rank, file);
-
-            renderSquareBackgroud(area, sq);
-            renderSquareCoord(area, sq, visual->is_board_flipped);
+        if (visual->board[i].flag & HighlightType::SELECTED) {
+            renderSquareHighlight(area, sq, visual->theme.highlight);
+            piece_on_mouse = visual->board[i].piece;
+        } else if (visual->board[i].flag & HighlightType::LEGAL)  {
+            renderSquareHighlight(area, sq, visual->theme.legal);
+        } else if (visual->board[i].flag & HighlightType::CHECK) {
+            renderSquareHighlight(area, sq, visual->theme.check);
         }
-    }   
 
-    // NOTE(Tejas): Because for flip board we are may render piece translated to its flipped position,
-    for (int rank = 0; rank < Chess::MAX_RANK; rank++) {
-
-        for (int file = 0; file < Chess::MAX_FILE; file++) {
-
-            int x = area.x + file * Window::SQUARE_DIM;
-            int y = area.y + rank * Window::SQUARE_DIM;
-
-            Chess::Square sq(rank, file);
-
-            if (sq == visual->selected_square) renderSquareHighlight(area, sq, visual->is_board_flipped);
-
-            if (sq.isSquareOnBitBoard(visual->legal_squares)) 
-                renderSquareHighlight(area, sq, visual->is_board_flipped, ::Color{255, 0, 255, 200});
-
-            Chess::Piece pc  = board->getPieceAt(sq);
-            if (sq != visual->selected_square) renderPieceOnSquare(area, sq, pc, visual->is_board_flipped);
-        }
+        if (!(visual->board[i].flag & HighlightType::SELECTED)) renderPieceOnSquare(area, sq, visual->board[i].piece);
+        else renderPieceAtMouse(area, visual->board[i].piece);
     }
 
-    if (visual->selected_square.isValid()) {
-        Chess::Piece pc  = board->getPieceAt(visual->selected_square);
-        renderPieceAtMouse(area, pc);
+    if (!piece_on_mouse.isEmpty()) {
+        renderPieceAtMouse(area, piece_on_mouse);
     }
 }
 
 void Render::renderMenu(const Window::Section &area) {
 
-    ::Color menu_background = ::Color{0x44, 0x44, 0x44, 0x99};
     Window::Section menu_section = Window::getMenuSection();
     ::DrawTextEx(G_assets.inter_regular_50, "Menu",
                  Vector2{ (float)menu_section.width / 2 - 50, (float)50 },
                  50, 2, ::Color({0, 255, 255, 255}));
-    ::DrawRectangleRec(area, menu_background);
+    ::DrawRectangleRec(area, theme.menu_bg);
 }
 
 void Render::renderInfo(const Window::Section &area) {

@@ -25,8 +25,10 @@ namespace State {
 
     private:
 
+        Chess::Square m_sel_square;
+        bool m_is_board_flipped;
+
         Chess::Board   *m_board;
-        Render::Visual *m_visual;
 
         // NOTE(Tejas): List of current legal moves for the selected piece, if any.
         MoveList m_move_list; 
@@ -35,6 +37,10 @@ namespace State {
         ::Sound m_move_sound;
         ::Sound m_capture_sound;
         ::Sound m_castle_sound;
+
+    private:
+
+        void m_buildVisual();
     };
 
 } // namespace Game

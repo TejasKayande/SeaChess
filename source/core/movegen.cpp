@@ -581,18 +581,6 @@ void PseudoLegal::generateKingMoves(const Chess::Board *board, Chess::Player pla
     generateCastlingMoves(board, player, move_list);
 }
 
-BitBoard PseudoLegal::convertMoveListToBitBoard(const MoveList &move_list) {
-
-    BitBoard move_bb = 0;
-
-    for (const Move &move : move_list) {
-        int to_idx = move.to.index;
-        move_bb |= (1ULL << to_idx);
-    }
-
-    return move_bb;
-}
-
 bool Legal::isCheckmate(const Chess::Board *board, Chess::Player player) {
 
     // TODO(Tejas): There has to be a better way to do this...
@@ -658,4 +646,28 @@ void Legal::generateMovesForSquare(const Chess::Board* board, Chess::Square sq, 
             }
         }
     }
+}
+
+BitBoard MoveGen::convertMoveListToBitBoard(const MoveList &move_list) {
+
+    BitBoard move_bb = 0;
+
+    for (const Move &move : move_list) {
+        int to_idx = move.to.index;
+        move_bb |= (1ULL << to_idx);
+    }
+
+    return move_bb;
+}
+
+BitBoard MoveGen::flipBitBoard(BitBoard bb) {
+
+    BitBoard result = 0;
+
+    while (bb) {
+        int sq = Base::popLSB(bb);
+        result |= (1ULL << (63 - sq));
+    }
+
+    return result;
 }

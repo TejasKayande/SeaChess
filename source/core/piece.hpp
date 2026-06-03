@@ -10,6 +10,9 @@ namespace Chess {
 
         u8 code;
 
+        // TODO(Tejas): I wonder if we can remove the NO_PIECE type? would that
+        //              help us? maybe in the board if I add an array for each
+        //              bitboard
         enum _Type : u8 {
             NO_PIECE = 0,
             PAWN     = 1,

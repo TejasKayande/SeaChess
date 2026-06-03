@@ -39,8 +39,6 @@ namespace MoveGen {
         void generateRookMoves(const Chess::Board *board, Chess::Player p, MoveList &move_list);
         void generateQueenMoves(const Chess::Board *board, Chess::Player p, MoveList &move_list);
         void generateKingMoves(const Chess::Board *board, Chess::Player p, MoveList &move_list);
-
-        BitBoard convertMoveListToBitBoard(const MoveList &move_list);
     }
 
     namespace Legal {
@@ -52,5 +50,8 @@ namespace MoveGen {
         void generateAllMoves(const Chess::Board *board, MoveList &move_list);
         void generateMovesForSquare(const Chess::Board *board, Chess::Square sq, MoveList &move_list);
     }
+
+    BitBoard convertMoveListToBitBoard(const MoveList &move_list);
+    BitBoard flipBitBoard(BitBoard bb);
 
 } // namespace MoveGen

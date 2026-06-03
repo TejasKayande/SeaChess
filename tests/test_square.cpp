@@ -50,3 +50,15 @@ TEST(SquareTest, InvalidSquareStatic) {
 
     EXPECT_FALSE(sq.isValid());
 }
+
+TEST(SquareeTest, ToString) {
+    Square sq1(0, 0);
+    Square sq2(7, 7);
+    Square sq3(3, 4);
+    Square invalid_sq;
+
+    EXPECT_EQ(sq1.toString(), "h1");
+    EXPECT_EQ(sq2.toString(), "a8");
+    EXPECT_EQ(sq3.toString(), "d4");
+    EXPECT_EQ(invalid_sq.toString(), "X");
+}
