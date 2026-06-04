@@ -23,9 +23,6 @@ namespace Menu {
 
         void advanceSelection() {
 
-            // DONT JUDGE ME IF I CANT REMEMBER FUNCTIONS OR METHODS ON STD LIB CLASSES.
-            // I DONT USE STD LIB THAT MUCH.....
-
             // NOTE(Tejas): I want to use the % op here, I cant remeber how it works.
             idx_ptr++;
             if (idx_ptr >= _items.size()) idx_ptr = 0;

@@ -13,6 +13,7 @@ add_library(chess_core
     source/core/board.cpp
     source/core/movegen.cpp
     source/core/perft.cpp
+    source/engine/engine.cpp
 )
 
 add_executable(${PROJECT_NAME}

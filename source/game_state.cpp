@@ -5,6 +5,8 @@
 #include "../assets/sound/capture.h"
 #include "../assets/sound/castle.h"
 
+#include "engine/engine.hpp"
+
 using namespace State;
 
 GameState::GameState() {
@@ -54,6 +56,18 @@ void GameState::update() {
     if (Window::isOnMenu()) {
         if (::IsKeyPressed(KEY_UP)) m_menu.recedeSelection();
         if (::IsKeyPressed(KEY_DOWN)) m_menu.advanceSelection();
+    }
+
+    bool move_made = false;
+
+    if (m_board->getTurn() == Chess::Player::DARK) {
+        Move best_move = Engine::getBestMove(m_board);
+        m_board->makeMove(best_move);
+        m_board->changeTurn();
+        m_move_list.clear();
+        m_sel_square = Chess::Square::invalid();
+
+        move_made = true;
     }
 
     if (::IsMouseButtonPressed(0)) {
@@ -112,12 +126,10 @@ void GameState::update() {
                             }
                         }
 
+                        move_made = true;
+
                         m_move_list.clear();
                         m_sel_square = Chess::Square::invalid();
-
-                        if (MoveGen::Legal::isCheckmate(m_board, m_board->getTurn())) {
-                            std::cout << "Checkmate! Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Light" : "Dark") << " wins!" << std::endl;
-                        }
                         break;
                     }
                 }
@@ -129,6 +141,12 @@ void GameState::update() {
     if (::IsMouseButtonPressed(1)) {
         m_sel_square = Chess::Square::invalid();
         m_move_list.clear();
+    }
+
+    if (move_made) {
+        if (MoveGen::Legal::isCheckmate(m_board, m_board->getTurn())) {
+            std::cout << "Checkmate! Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Dark" : "Light") << " wins!" << std::endl;
+        }
     }
 }
 
