@@ -6,6 +6,8 @@
 
 namespace Engine {
 
+    int evaluate(Chess::Board *board);
+
     Move getBestMove(Chess::Board *board);
 
 } // namespace Engine
