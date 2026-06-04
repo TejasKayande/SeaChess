@@ -15,6 +15,8 @@ struct Move {
     //              castle it was...
     enum _MoveType : u8 {
 
+        NONE = 0,
+
         QUIET,
         CAPTURE,
 
@@ -35,6 +37,16 @@ struct Move {
         KING_CASTLE,
         QUEEN_CASTLE,
     } type;
+
+    Chess::Piece captured_piece = Chess::Piece::nopiece(); // for unmaking moves
+
+    Move() : from(Chess::Square::invalid()), 
+             to(Chess::Square::invalid()), 
+             type(NONE), 
+             captured_piece(Chess::Piece::nopiece()) {}
+
+    Move(Chess::Square f, Chess::Square t, _MoveType mt, Chess::Piece captured = Chess::Piece::nopiece()) 
+        : from(f), to(t), type(mt), captured_piece(captured) {}
 };
 
 using MoveType = Move::_MoveType;

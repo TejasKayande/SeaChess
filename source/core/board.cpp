@@ -375,6 +375,62 @@ bool Board::makeMove(const Move& m) {
     return move_made;
 }
 
+bool Board::unMakeMove(const Move& m) {
+
+    // NOTE(Tejas): This can only undo move that was the latest on the board.
+    bool move_unmade = false;
+
+    Piece moving_piece = getPieceAt(m.to);
+    if (moving_piece.isEmpty()) return false;
+
+    std::cout << "here" << std::endl;
+
+    switch (m.type) {
+
+
+    case MoveType::QUIET:
+         
+    case MoveType::DOUBLE_PAWN_PUSH:
+         
+    case MoveType::EN_PASSANT:
+         
+    case MoveType::PROMO_KNIGHT:
+    case MoveType::PROMO_BISHOP:
+    case MoveType::PROMO_ROOK:
+    case MoveType::PROMO_QUEEN:
+         
+    case MoveType::PROMO_CAPTURE_KNIGHT:
+    case MoveType::PROMO_CAPTURE_BISHOP:
+    case MoveType::PROMO_CAPTURE_ROOK:
+    case MoveType::PROMO_CAPTURE_QUEEN:
+
+    case MoveType::KING_CASTLE:
+    case MoveType::QUEEN_CASTLE: {
+
+        setPieceAt(m.to, Piece::nopiece());
+        setPieceAt(m.from, moving_piece);
+
+        move_unmade = true;
+
+    } break;
+
+    case MoveType::CAPTURE: {
+
+        setPieceAt(m.to, m.captured_piece);
+        setPieceAt(m.from, moving_piece);
+
+        move_unmade = true;
+        
+    } break;
+
+
+    default: {} break;
+
+    }
+
+    return move_unmade;
+}
+
 BitBoard Board::getOccupied() const {
 
     return _lOccupied | _dOccupied;

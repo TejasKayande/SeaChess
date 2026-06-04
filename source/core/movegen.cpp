@@ -44,7 +44,7 @@ namespace {
                     //              check or if it passes through an attacked square
                     BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
                     if (!(enemy_attacks & e1_mask) && !(enemy_attacks & f1_mask) && !(enemy_attacks & g1_mask)) {
-                        move_list.push_back({from, Chess::Square(0, 1), Move::KING_CASTLE});
+                        move_list.push_back(Move(from, Chess::Square(0, 1), Move::KING_CASTLE));
                     }
                 }
             }
@@ -61,7 +61,7 @@ namespace {
                     //              check or if it passes through an attacked square
                     BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
                     if (!(enemy_attacks & e1_mask) && !(enemy_attacks & d1_mask) && !(enemy_attacks & c1_mask)) {
-                        move_list.push_back({from, Chess::Square(0, 5), Move::QUEEN_CASTLE});
+                        move_list.push_back(Move(from, Chess::Square(0, 5), Move::QUEEN_CASTLE));
                     }
                 }
             }
@@ -81,7 +81,7 @@ namespace {
                     //              check or if it passes through an attacked square
                     BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
                     if (!(enemy_attacks & e8_mask) && !(enemy_attacks & f8_mask) && !(enemy_attacks & g8_mask)) {
-                        move_list.push_back({from, Chess::Square(7, 1), Move::KING_CASTLE});
+                        move_list.push_back(Move(from, Chess::Square(7, 1), Move::KING_CASTLE));
                     }
                 }
             }
@@ -98,7 +98,7 @@ namespace {
                     //              check or if it passes through an attacked square
                     BitBoard enemy_attacks = Attack::getAllAttacks(*board, enemy);
                     if (!(enemy_attacks & e8_mask) && !(enemy_attacks & d8_mask) && !(enemy_attacks & c8_mask)) {
-                        move_list.push_back({from, Chess::Square(7, 5), Move::QUEEN_CASTLE});
+                        move_list.push_back(Move(from, Chess::Square(7, 5), Move::QUEEN_CASTLE));
                     }
                 }
             }
@@ -389,14 +389,14 @@ void PseudoLegal::generatePawnMoves(const Chess::Board *board, Chess::Player pla
         if (to_idx >= 0 && to_idx < 64 && !(all_occ & (1ULL << to_idx))) {
             Chess::Square to(to_idx);
 
-            move_list.push_back({from, to, Move::QUIET});
+            move_list.push_back(Move(from, to, Move::QUIET));
 
             // NOTE(Tejas): Double Push
             bool is_start_rank = (player == Chess::Player::LIGHT) ? (rank == 1) : (rank == 6);
             int to_idx2 = from_idx + 2 * dir;
 
             if (is_start_rank && !(all_occ & (1ULL << to_idx2))) {
-                move_list.push_back({from, Chess::Square(to_idx2), Move::DOUBLE_PAWN_PUSH});
+                move_list.push_back(Move(from, Chess::Square(to_idx2), Move::DOUBLE_PAWN_PUSH));
             }
         }
 
@@ -408,13 +408,13 @@ void PseudoLegal::generatePawnMoves(const Chess::Board *board, Chess::Player pla
             int to_idx = Base::popLSB(targets);
             Chess::Square to(to_idx);
 
-            move_list.push_back({from, to, Move::CAPTURE});
+            move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
         }
 
         // NOTE(Tejas): En Passant
         Chess::Square ep_target = board->getEnPassantTarget();
         if (ep_target.isValid() && attacks & (1ULL << ep_target.toIndex())) {
-            move_list.push_back({from, ep_target, Move::EN_PASSANT});
+            move_list.push_back(Move(from, ep_target, Move::EN_PASSANT));
         }
     }
 }
@@ -443,9 +443,9 @@ void PseudoLegal::generateKnightMoves(const Chess::Board *board, Chess::Player p
             Chess::Square to(to_idx);
 
             if (enemy_occ & (1ULL << to_idx)) {
-                move_list.push_back({from, to, Move::CAPTURE});
+                move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
             } else {
-                move_list.push_back({from, to, Move::QUIET});
+                move_list.push_back(Move(from, to, Move::QUIET));
             }
         }
     }
@@ -475,9 +475,9 @@ void PseudoLegal::generateBishopMoves(const Chess::Board *board, Chess::Player p
             Chess::Square to(to_idx);
 
             if (enemy_occ & (1ULL << to_idx)) {
-                move_list.push_back({from, to, Move::CAPTURE});
+                move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
             } else {
-                move_list.push_back({from, to, Move::QUIET});
+                move_list.push_back(Move(from, to, Move::QUIET));
             }
         }
     }
@@ -509,9 +509,9 @@ void PseudoLegal::generateRookMoves(const Chess::Board *board, Chess::Player pla
             Chess::Square to(to_idx);
 
             if (enemy_occ & (1ULL << to_idx)) {
-                move_list.push_back({from, to, Move::CAPTURE});
+                move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
             } else {
-                move_list.push_back({from, to, Move::QUIET});
+                move_list.push_back(Move(from, to, Move::QUIET));
             }
         }
     }
@@ -543,9 +543,9 @@ void PseudoLegal::generateQueenMoves(const Chess::Board *board, Chess::Player pl
             Chess::Square to(to_idx);
 
             if (enemy_occ & (1ULL << to_idx)) {
-                move_list.push_back({from, to, Move::CAPTURE});
+                move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
             } else {
-                move_list.push_back({from, to, Move::QUIET});
+                move_list.push_back(Move(from, to, Move::QUIET));
             }
         }
     }
@@ -572,9 +572,9 @@ void PseudoLegal::generateKingMoves(const Chess::Board *board, Chess::Player pla
         Chess::Square to(to_idx);
 
         if (enemy_occ & (1ULL << to_idx)) {
-            move_list.push_back({from, to, Move::CAPTURE});
+            move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
         } else {
-            move_list.push_back({from, to, Move::QUIET});
+            move_list.push_back(Move(from, to, Move::QUIET));
         }
     }
 

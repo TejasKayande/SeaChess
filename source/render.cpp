@@ -24,7 +24,6 @@ using namespace Render;
 constexpr Theme theme = Themes::SLATE_BLUE;
 // constexpr Theme theme = Themes::EMERALD;
 
-
 // TODO(Tejas): Load these directly into the exe
 struct _Assets {
     ::Texture2D lPawn, lKnight, lBishop, lRook, lQueen, lKing;
@@ -73,16 +72,16 @@ namespace { // Anonymous namespace for helper functions
 
         int offset_from_square = 5; // in pixels
 
-        ::Color text_color =  ((sq.rank() + sq.file()) % 2 == 0) ? theme.board_light : theme.board_dark;
+        ::Color text_color =  ((sq.rank() + sq.file()) % 2 == 0) ? theme.board_dark : theme.board_light;
         int xx = px + offset_from_square;
         int yy = py + offset_from_square;
 
-        if (file == 0) {
-            std::string ch = std::to_string(sq.rank() + 1);
+        if (sq.file() == 0) {
+            std::string ch = std::to_string(rank + 1);
             ::DrawTextEx(G_assets.inter_regular_24, ch.c_str(), Vector2{(float)xx, (float)yy}, 24, 2, text_color);
         }
 
-        if (rank == 7) {
+        if (sq.rank() == 7) {
             xx = px + Window::SQUARE_DIM - 15;
             yy = py + Window::SQUARE_DIM - 25;
             char ch[2] = { '\0' };
@@ -194,7 +193,6 @@ void Render::initAssets() {
 
     G_assets.inter_regular_24 = ::LoadFontFromMemory(".ttf", __Inter_Regular_ttf, __Inter_Regular_ttf_len, 24, nullptr, 0);
     G_assets.inter_regular_50 = ::LoadFontFromMemory(".ttf", __Roboto_Regular_ttf, __Roboto_Regular_ttf_len, 50, nullptr, 0);
-
 
     ::UnloadImage(lPawn_img);
     ::UnloadImage(lKnight_img);

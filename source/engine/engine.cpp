@@ -3,6 +3,8 @@
 
 #include <random>
 #include <iostream>
+#include <cstdlib>
+#include <time.h>
 
 namespace {
 
@@ -63,6 +65,7 @@ Move Engine::getBestMove(Chess::Board *board) {
         return Move();
     }
 
+    srand(time(NULL));
     int rand_idx = rand() % move_list.size();
 
     std::cout << "Eval for " << (int)board->getTurn() << ": " << evaluate(board) << std::endl;

@@ -43,6 +43,8 @@ namespace State {
 
         Menu::MenuState m_menu; // Stack or Heap? IDK
 
+        Move m_last_move; 
+
     private:
         Render::Visual _buildVisual();
     };

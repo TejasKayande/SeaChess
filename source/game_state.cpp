@@ -29,6 +29,8 @@ GameState::GameState() {
     m_capture_sound = ::LoadSoundFromWave(capture_wav);
     m_castle_sound  = ::LoadSoundFromWave(castle_wav);
 
+    m_last_move = Move();
+
     UnloadWave(move_wav);
     UnloadWave(capture_wav);
     UnloadWave(castle_wav);
@@ -58,16 +60,29 @@ void GameState::update() {
         if (::IsKeyPressed(KEY_DOWN)) m_menu.advanceSelection();
     }
 
+    if (::IsKeyPressed(KEY_LEFT)) {
+        if (m_board->unMakeMove(m_last_move)) {
+            m_board->changeTurn();
+            m_move_list.clear();
+            m_last_move = Move();
+            m_sel_square = Chess::Square::invalid();
+        }
+    }
+
     bool move_made = false;
 
+    if (::IsKeyPressed(KEY_UP)) {
+        
     if (m_board->getTurn() == Chess::Player::DARK) {
         Move best_move = Engine::getBestMove(m_board);
         m_board->makeMove(best_move);
         m_board->changeTurn();
         m_move_list.clear();
         m_sel_square = Chess::Square::invalid();
-
+        m_last_move = best_move;
         move_made = true;
+        ::PlaySound(m_move_sound);
+    }
     }
 
     if (::IsMouseButtonPressed(0)) {
@@ -130,6 +145,8 @@ void GameState::update() {
 
                         m_move_list.clear();
                         m_sel_square = Chess::Square::invalid();
+
+                        m_last_move = move;
                         break;
                     }
                 }
@@ -146,6 +163,29 @@ void GameState::update() {
     if (move_made) {
         if (MoveGen::Legal::isCheckmate(m_board, m_board->getTurn())) {
             std::cout << "Checkmate! Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Dark" : "Light") << " wins!" << std::endl;
+        }
+
+        {
+            // TODO(Tejas): GET RIDDD OF THISSSSSSSSSSS
+            Chess::PType ptype = Chess::PType::QUEEN;
+            if (::IsKeyDown(KEY_R)) ptype = Chess::PType::ROOK;
+            if (::IsKeyDown(KEY_B)) ptype = Chess::PType::BISHOP;
+            if (::IsKeyDown(KEY_N)) ptype = Chess::PType::KNIGHT;
+
+            for (int file = 0; file < Chess::MAX_FILE; file++) {
+
+                Chess::Square d_sq(0, file);
+                Chess::Piece p1 = m_board->getPieceAt(d_sq);
+                if (p1.type() == Chess::PType::PAWN) {
+                    m_board->setPieceAt(d_sq, Chess::Piece(ptype, Chess::PColor::DARK));
+                }
+
+                Chess::Square l_sq(7, file);
+                Chess::Piece p2 = m_board->getPieceAt(l_sq);
+                if (p2.type() == Chess::PType::PAWN) {
+                    m_board->setPieceAt(l_sq, Chess::Piece(ptype, Chess::PColor::LIGHT));
+                }
+            }
         }
     }
 }
