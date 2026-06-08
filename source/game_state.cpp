@@ -31,9 +31,93 @@ GameState::GameState() {
 
     m_last_move = Move();
 
+    m_theme = Themes::DEFAULT;
+
+    m_theme_menu = Menu::Menu("Theme Menu", {
+        { 
+            "Default", 
+            [this]() { 
+                m_setTheme(Themes::DEFAULT); 
+                m_current_menu = &m_main_menu;
+                Window::toggleMenu();
+            }, 
+            nullptr 
+        },
+
+        { 
+            "Classic Wood", 
+            [this]() { 
+                m_setTheme(Themes::CLASSIC_WOOD); 
+                m_current_menu = &m_main_menu;
+                Window::toggleMenu();
+            }, 
+            nullptr 
+        },
+
+        { 
+            "Slate Blue", 
+            [this]() { 
+                m_setTheme(Themes::SLATE_BLUE); 
+                m_current_menu = &m_main_menu;
+                Window::toggleMenu();
+            }, 
+            nullptr 
+        },
+
+        { 
+            "Emerald", 
+            [this]() { 
+                m_setTheme(Themes::EMERALD); 
+                m_current_menu = &m_main_menu;
+                Window::toggleMenu();
+            }, 
+            nullptr 
+        },
+
+        { 
+            "Back to Main Menu", 
+            [this]() { 
+                m_current_menu = &m_main_menu; 
+            }, 
+            nullptr 
+        }
+    });
+
+    m_main_menu = Menu::Menu("Main Menu", {
+        { 
+            "New Game", 
+            [this]() { 
+                m_board->reset(); 
+            }, 
+            nullptr 
+        },
+
+        { 
+            "Load Fen", 
+            [this]() { 
+                std::cout << "Load Fen!" << std::endl; 
+            }, 
+            nullptr 
+        },
+
+        { "Themes", []() { }, &m_theme_menu },
+
+        { 
+            "Quit", 
+            [this]() { 
+                m_running = false; 
+            }, 
+            nullptr 
+        }
+    });
+
+    m_current_menu = &m_main_menu;
+
     UnloadWave(move_wav);
     UnloadWave(capture_wav);
     UnloadWave(castle_wav);
+
+    m_running = true;
 }
 
 GameState::~GameState() {
@@ -47,17 +131,25 @@ GameState::~GameState() {
     delete m_board;
 }
 
-void GameState::update() {
+WindowEvent GameState::update() {
 
     // TODO(Tejas): Seperate updation for Menu game Game, and perhaps the Status and
     //              Information sections as well
+
+    if (!m_running) return WindowEvent::QUIT;
 
     if (::IsKeyPressed(KEY_X)) Window::toggleMenu();
     if (::IsKeyPressed(KEY_F)) m_is_board_flipped = !m_is_board_flipped;
 
     if (Window::isOnMenu()) {
-        if (::IsKeyPressed(KEY_UP)) m_menu.recedeSelection();
-        if (::IsKeyPressed(KEY_DOWN)) m_menu.advanceSelection();
+        if (::IsKeyPressed(KEY_UP))   m_current_menu->prev();
+        if (::IsKeyPressed(KEY_DOWN)) m_current_menu->next();
+
+        if (::IsKeyPressed(KEY_ENTER)) {
+            Menu::MenuItem item = m_current_menu->getItems()[m_current_menu->getPtr()];
+            if (item.proc) item.proc();
+            if (item.sub_menu) m_current_menu = item.sub_menu;
+        }
     }
 
     if (::IsKeyPressed(KEY_LEFT)) {
@@ -72,17 +164,16 @@ void GameState::update() {
     bool move_made = false;
 
     if (::IsKeyPressed(KEY_UP)) {
-        
-    if (m_board->getTurn() == Chess::Player::DARK) {
-        Move best_move = Engine::getBestMove(m_board);
-        m_board->makeMove(best_move);
-        m_board->changeTurn();
-        m_move_list.clear();
-        m_sel_square = Chess::Square::invalid();
-        m_last_move = best_move;
-        move_made = true;
-        ::PlaySound(m_move_sound);
-    }
+        if (m_board->getTurn() == Chess::Player::DARK) {
+            Move best_move = Engine::getBestMove(m_board);
+            m_board->makeMove(best_move);
+            m_board->changeTurn();
+            m_move_list.clear();
+            m_sel_square = Chess::Square::invalid();
+            m_last_move = best_move;
+            move_made = true;
+            ::PlaySound(m_move_sound);
+        }
     }
 
     if (::IsMouseButtonPressed(0)) {
@@ -164,41 +255,20 @@ void GameState::update() {
         if (MoveGen::Legal::isCheckmate(m_board, m_board->getTurn())) {
             std::cout << "Checkmate! Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Dark" : "Light") << " wins!" << std::endl;
         }
-
-        {
-            // TODO(Tejas): GET RIDDD OF THISSSSSSSSSSS
-            Chess::PType ptype = Chess::PType::QUEEN;
-            if (::IsKeyDown(KEY_R)) ptype = Chess::PType::ROOK;
-            if (::IsKeyDown(KEY_B)) ptype = Chess::PType::BISHOP;
-            if (::IsKeyDown(KEY_N)) ptype = Chess::PType::KNIGHT;
-
-            for (int file = 0; file < Chess::MAX_FILE; file++) {
-
-                Chess::Square d_sq(0, file);
-                Chess::Piece p1 = m_board->getPieceAt(d_sq);
-                if (p1.type() == Chess::PType::PAWN) {
-                    m_board->setPieceAt(d_sq, Chess::Piece(ptype, Chess::PColor::DARK));
-                }
-
-                Chess::Square l_sq(7, file);
-                Chess::Piece p2 = m_board->getPieceAt(l_sq);
-                if (p2.type() == Chess::PType::PAWN) {
-                    m_board->setPieceAt(l_sq, Chess::Piece(ptype, Chess::PColor::LIGHT));
-                }
-            }
-        }
     }
+
+    return WindowEvent::NONE;
 }
 
 void GameState::render() {
 
     if (Window::isOnMenu()) {
 
-        Render::renderMenu(Window::getMenuSection(), m_menu);
+        Render::renderMenu(Window::getMenuSection(), m_current_menu, m_theme);
 
     } else {
 
-        Render::Visual visual = _buildVisual();
+        Render::Visual visual = m_buildVisual();
 
         Render::renderBoard(Window::getBoardSection(), visual);
         Render::renderStatus(Window::getStatusSection());
@@ -206,10 +276,10 @@ void GameState::render() {
     }
 }
 
-Render::Visual GameState::_buildVisual() {
+Render::Visual GameState::m_buildVisual() {
 
     Render::Visual visual = { };
-    visual.theme = Themes::EMERALD;
+    visual.theme = m_theme;
     visual.show_legal = true;
     visual.show_sel   = true;
     visual.show_check = true;
@@ -235,4 +305,8 @@ Render::Visual GameState::_buildVisual() {
     }
 
     return visual;
+}
+
+void GameState::m_setTheme(Theme theme) {
+    m_theme = theme;
 }

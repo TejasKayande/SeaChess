@@ -5,10 +5,10 @@
 
 #include <chrono>
 
-namespace PerfTest { // for perftest
+namespace PerfTest {
 
     unsigned long perft(Chess::Board* board, int depth);
     void divide(Chess::Board* board, int depth);
 
-    void runPerftest(int depth);
-}
+    void runPerftest(Chess::Board* board, int depth);
+} // namespace PerfTest

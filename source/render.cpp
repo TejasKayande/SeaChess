@@ -19,11 +19,6 @@
 
 using namespace Render;
 
-// constexpr Theme theme = Themes::DEFAULT;
-// constexpr Theme theme = Themes::CLASSIC_WOOD;
-constexpr Theme theme = Themes::SLATE_BLUE;
-// constexpr Theme theme = Themes::EMERALD;
-
 // TODO(Tejas): Load these directly into the exe
 struct _Assets {
     ::Texture2D lPawn, lKnight, lBishop, lRook, lQueen, lKing;
@@ -38,7 +33,7 @@ static _Assets G_assets;
 
 namespace { // Anonymous namespace for helper functions
 
-    void renderSquareBackgroud(const Window::Section &area, Chess::Square sq) {
+    void renderSquareBackgroud(const Window::Section &area, Chess::Square sq, Theme theme) {
 
         if (!sq.isValid()) return;
 
@@ -59,7 +54,7 @@ namespace { // Anonymous namespace for helper functions
         ::DrawRectangle(px, py, Window::SQUARE_DIM, Window::SQUARE_DIM, color);
     }
 
-    void renderSquareCoord(const Window::Section &area, Chess::Square sq, int rank, int file) {
+    void renderSquareCoord(const Window::Section &area, Chess::Square sq, int rank, int file, Theme theme) {
 
         // NOTE(Tejas): The Square passed here is just to get the position, it
         //              has no meaning in terms of actual square, this is just
@@ -235,7 +230,7 @@ void Render::renderBoard(const Window::Section &area, const Visual &visual) {
 
     for (int i = 0; i < Chess::MAX_RANK * Chess::MAX_FILE; i++) {
 
-        renderSquareBackgroud(area, Chess::Square(i));
+        renderSquareBackgroud(area, Chess::Square(i), visual.theme);
 
         Chess::Square sq(i);
 
@@ -248,7 +243,7 @@ void Render::renderBoard(const Window::Section &area, const Visual &visual) {
             renderSquareHighlight(area, sq, visual.theme.check);
         }
 
-        renderSquareCoord(area, sq, visual.board[i].rank, visual.board[i].file);
+        renderSquareCoord(area, sq, visual.board[i].rank, visual.board[i].file, visual.theme);
 
         if (!(visual.board[i].flag & HighlightType::SELECTED)) renderPieceOnSquare(area, sq, visual.board[i].piece);
         else renderPieceAtMouse(area, visual.board[i].piece);
@@ -259,32 +254,36 @@ void Render::renderBoard(const Window::Section &area, const Visual &visual) {
     }
 }
 
-void Render::renderMenu(const Window::Section &area, const Menu::MenuState menu) {
+void Render::renderMenu(const Window::Section &area, const Menu::Menu *menu, Theme theme) {
+
+    ::DrawRectangleRec(area, theme.menu_bg);
+    // ::DrawLine(Window::WINDOW_WIDTH / 2, 0, Window::WINDOW_WIDTH / 2, Window::WINDOW_HEIGHT, ::Color{0, 0, 0, 255});
 
     int line_gap = 100;
 
-    Window::Section menu_section = Window::getMenuSection();
-    ::DrawTextEx(G_assets.inter_regular_50, "Menu",
-                 Vector2{ (float)menu_section.width / 2 - 50, (float)50 },
-                 50, 2, ::Color({0, 255, 255, 255}));
-    ::DrawRectangleRec(area, theme.menu_bg);
+    const int WINDOW_WIDTH_CENTER = Window::WINDOW_WIDTH / 2;
+    int menu_title_width = ::MeasureTextEx(G_assets.inter_regular_50, menu->getTitle().c_str(), 50, 2).x;
+
+    ::DrawTextEx(G_assets.inter_regular_50, menu->getTitle().c_str(),
+                 Vector2{ (float)WINDOW_WIDTH_CENTER - (menu_title_width / 2), (float)50 },
+                 50, 2, ::Color({255, 255, 255, 255}));
 
     ::Color text_color = ::Color(255, 255, 255, 230);
     int i = 1;
-    for (std::string item : menu.getItems()) {
+    for (Menu::MenuItem item : menu->getItems()) {
 
         ::Color text_color = ::Color({0, 255, 255, 255});
 
         // TODO(Tejas): This is a disgrace...
-        if (i - 1 == menu.getPtr()) {
-
+        if (i - 1 == menu->getPtr()) {
             text_color = ::Color({255, 0, 255, 255});
         }
 
-        // NOTE(Tejas): This is going to be ugly as I dont know rn how Im going to center align these.
-        ::DrawTextEx(G_assets.inter_regular_24, item.c_str(),
-                     Vector2{ (float)menu_section.width / 2 - 50 + ((item.length() * 7) / 4), (float)50 + (line_gap * i)},
-                     24, 2, text_color);
+        int width = ::MeasureTextEx(G_assets.inter_regular_50, item.label.c_str(), 50, 2).x;
+
+        ::DrawTextEx(G_assets.inter_regular_50, item.label.c_str(),
+                     Vector2{ (float)(Window::WINDOW_WIDTH / 2) - (width / 2), (float)50 + (line_gap * i)},
+                     50, 2, text_color);
         i++;
     }
 }

@@ -296,13 +296,22 @@ bool Board::makeMove(const Move& m) {
                                   : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
             }
 
-            if (moving_piece.type() == PType::ROOK) {
+            if ((moving_piece.type() == PType::ROOK)) {
                 if (m.from == Square(0, 0))      _castling_rights &= ~CastlingRights::LIGHT_KING_SIDE;  // a1
                 else if (m.from == Square(0, 7)) _castling_rights &= ~CastlingRights::LIGHT_QUEEN_SIDE; // h1
                 else if (m.from == Square(7, 0)) _castling_rights &= ~CastlingRights::DARK_KING_SIDE;   // a8
                 else if (m.from == Square(7, 7)) _castling_rights &= ~CastlingRights::DARK_QUEEN_SIDE;  // h8
             }
 
+            if (m.type == MoveType::CAPTURE && m.captured_piece.type() == PType::ROOK) {
+
+                if (m.to == Square(0, 0))      _castling_rights &= ~CastlingRights::LIGHT_KING_SIDE;  // a1
+                else if (m.to == Square(0, 7)) _castling_rights &= ~CastlingRights::LIGHT_QUEEN_SIDE; // h1
+                else if (m.to == Square(7, 0)) _castling_rights &= ~CastlingRights::DARK_KING_SIDE;   // a8
+                else if (m.to == Square(7, 7)) _castling_rights &= ~CastlingRights::DARK_QUEEN_SIDE;  // h8
+            }
+
+            move_made = true;
             return true;
 
         } break;
@@ -334,6 +343,10 @@ bool Board::makeMove(const Move& m) {
                 setPieceAt(Square(7, 2), Piece(PType::ROOK, PColor::DARK));
             }
 
+            _castling_rights &= (moving_piece.color() == PColor::LIGHT) ? 
+                                ~(CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE)
+                              : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
+
             return true;
 
         } break;
@@ -353,6 +366,10 @@ bool Board::makeMove(const Move& m) {
                 setPieceAt(Square(7, 4), Piece(PType::ROOK, PColor::DARK));
              }
 
+            _castling_rights &= (moving_piece.color() == PColor::LIGHT) ? 
+                                ~(CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE)
+                              : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
+
             return true;
 
         } break;
@@ -365,6 +382,38 @@ bool Board::makeMove(const Move& m) {
             int dir = (moving_piece.color() == PColor::LIGHT) ? -8 : +8;
             Square captured_pawn_sq(m.to.toIndex() + dir);
             setPieceAt(captured_pawn_sq, Piece::nopiece());
+
+            return true;
+        }
+
+        case MoveType::PROMO_CAPTURE_QUEEN:
+        case MoveType::PROMO_QUEEN: {
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, Piece(PType::QUEEN, moving_piece.color()));
+
+            return true;
+        }
+
+        case MoveType::PROMO_CAPTURE_ROOK:
+        case MoveType::PROMO_ROOK: {
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, Piece(PType::ROOK, moving_piece.color()));
+
+            return true;
+        }
+
+        case MoveType::PROMO_CAPTURE_BISHOP:
+        case MoveType::PROMO_BISHOP: {
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, Piece(PType::BISHOP, moving_piece.color()));
+
+            return true;
+        }
+
+        case MoveType::PROMO_CAPTURE_KNIGHT:
+        case MoveType::PROMO_KNIGHT: {
+            setPieceAt(m.from, Piece::nopiece());
+            setPieceAt(m.to, Piece(PType::KNIGHT, moving_piece.color()));
 
             return true;
         }
@@ -383,10 +432,7 @@ bool Board::unMakeMove(const Move& m) {
     Piece moving_piece = getPieceAt(m.to);
     if (moving_piece.isEmpty()) return false;
 
-    std::cout << "here" << std::endl;
-
     switch (m.type) {
-
 
     case MoveType::QUIET:
          
@@ -462,4 +508,34 @@ u8 Board::getCastlingRights() const {
 Square Board::getEnPassantTarget() const {
 
     return _en_passant_target;
+}
+
+
+void Board::print() const {
+
+    for (int i = 0; i < 64; ++i) {
+        Square sq(i);
+        Piece p = getPieceAt(sq);
+
+        char c = '.';
+        if (!p.isEmpty()) {
+            switch (p.type()) {
+                case PType::PAWN:   c = 'p'; break;
+                case PType::KNIGHT: c = 'n'; break;
+                case PType::BISHOP: c = 'b'; break;
+                case PType::ROOK:   c = 'r'; break;
+                case PType::QUEEN:  c = 'q'; break;
+                case PType::KING:   c = 'k'; break;
+                default: break;
+            }
+
+            if (p.color() == PColor::LIGHT)
+                c = toupper(c);
+        }
+
+        std::cout << c << " ";
+
+        if (sq.file() == 7)
+            std::cout << "\n";
+    }
 }

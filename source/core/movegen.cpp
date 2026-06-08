@@ -105,6 +105,24 @@ namespace {
         }
     }
 
+    void generatePawnPromotionMoves(MoveList &move_list, Chess::Board, Chess::Square from, 
+                                    Chess::Square to, bool capture = false, 
+                                    Chess::Piece captured_piece = Chess::Piece::nopiece()) 
+    {
+
+        if (capture)  {
+            move_list.push_back(Move(from, to, Move::PROMO_CAPTURE_QUEEN , captured_piece));
+            move_list.push_back(Move(from, to, Move::PROMO_CAPTURE_ROOK  , captured_piece));
+            move_list.push_back(Move(from, to, Move::PROMO_CAPTURE_KNIGHT, captured_piece));
+            move_list.push_back(Move(from, to, Move::PROMO_CAPTURE_BISHOP, captured_piece));
+        } else {
+            move_list.push_back(Move(from, to, Move::PROMO_QUEEN));
+            move_list.push_back(Move(from, to, Move::PROMO_ROOK));
+            move_list.push_back(Move(from, to, Move::PROMO_KNIGHT));
+            move_list.push_back(Move(from, to, Move::PROMO_BISHOP));
+        }
+    }
+
 } // Anonymous namespace
 
 void MoveGen::init() {
@@ -375,6 +393,8 @@ void PseudoLegal::generatePawnMoves(const Chess::Board *board, Chess::Player pla
     BitBoard enemy_occ    = board->getOccupied(enemy);
     BitBoard all_occ      = friendly_occ | enemy_occ;
 
+    const int promo_rank = (player == Chess::Player::LIGHT) ? 7 : 0;
+
     int dir = (player == Chess::Player::LIGHT) ? +8 : -8;
 
     while (pawns) {
@@ -389,7 +409,11 @@ void PseudoLegal::generatePawnMoves(const Chess::Board *board, Chess::Player pla
         if (to_idx >= 0 && to_idx < 64 && !(all_occ & (1ULL << to_idx))) {
             Chess::Square to(to_idx);
 
-            move_list.push_back(Move(from, to, Move::QUIET));
+            if (to.rank() == promo_rank) {
+                generatePawnPromotionMoves(move_list, *board, from, to); 
+            } else {
+                move_list.push_back(Move(from, to, Move::QUIET));
+            }
 
             // NOTE(Tejas): Double Push
             bool is_start_rank = (player == Chess::Player::LIGHT) ? (rank == 1) : (rank == 6);
@@ -408,7 +432,11 @@ void PseudoLegal::generatePawnMoves(const Chess::Board *board, Chess::Player pla
             int to_idx = Base::popLSB(targets);
             Chess::Square to(to_idx);
 
-            move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
+            if (to.rank() == promo_rank) {
+                generatePawnPromotionMoves(move_list, *board, from, to, true, board->getPieceAt(to));
+            } else {
+                move_list.push_back(Move(from, to, Move::CAPTURE, board->getPieceAt(to)));
+            }
         }
 
         // NOTE(Tejas): En Passant

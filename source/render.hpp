@@ -91,7 +91,7 @@ namespace Render {
 
     void renderBoard(const Window::Section &area, const Visual &visual);
 
-    void renderMenu(const Window::Section &area, const Menu::MenuState menu);
+    void renderMenu(const Window::Section &area, const Menu::Menu *menu, Theme theme);
     void renderInfo(const Window::Section &area);
     void renderStatus(const Window::Section &area);
 

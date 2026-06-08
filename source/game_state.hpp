@@ -15,6 +15,11 @@
 
 namespace State {
 
+    enum WindowEvent {
+        NONE = 0,
+        QUIT
+    };
+
     class GameState {
 
     public:
@@ -22,10 +27,12 @@ namespace State {
         GameState();
         ~GameState();
 
-        void update();
+        WindowEvent update();
         void render();
 
     private:
+
+        bool m_running;
 
         Chess::Square m_sel_square;
         bool m_is_board_flipped;
@@ -41,12 +48,19 @@ namespace State {
         ::Sound m_capture_sound;
         ::Sound m_castle_sound;
 
-        Menu::MenuState m_menu; // Stack or Heap? IDK
-
         Move m_last_move; 
 
+        Theme m_theme;
+
+        Menu::Menu *m_current_menu;
+        Menu::Menu m_main_menu;
+        Menu::Menu m_theme_menu;
+
     private:
-        Render::Visual _buildVisual();
+
+        Render::Visual m_buildVisual();
+
+        void m_setTheme(Theme theme);
     };
 
 } // namespace Game

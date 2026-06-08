@@ -1,5 +1,6 @@
 
 #include "perft.hpp"
+#include <bitset>
 
 unsigned long PerfTest::perft(Chess::Board* board, int depth) {
 
@@ -69,10 +70,8 @@ void PerfTest::divide(Chess::Board* board, int depth) {
     if (ms > 0) std::cout << "NPS   : " << (total * 1000ULL) / ms << "\n";
 }
 
-void PerfTest::runPerftest(int depth) {
+void PerfTest::runPerftest(Chess::Board *board, int depth) {
 
     MoveGen::init();
-
-    Chess::Board* board = new Chess::Board();
     divide(board, depth);
 }

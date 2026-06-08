@@ -21,25 +21,27 @@ TODO(Tejas):
 - [ ] Add Board themes and menu for selecting them.
 */
 
+
+// TODO(Tejas): Setup a perft test suite with different positions.
 #define RUN_PERFTEST 0
 
 #if RUN_PERFTEST
 #include "core/perft.hpp"
-#include <thread>
 bool runPerftest() {
 
     using namespace PerfTest;
-    
-    int depth = 6;
-    std::thread perft_thread(PerfTest::runPerftest, 6);
-    perft_thread.join();
 
+    Chess::Board* board = new Chess::Board();
+    board->setFen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq -");
+    
+    int depth = 4;
+    PerfTest::runPerftest(board, depth);
+
+    delete board;
     return true;
 }
 #else
-bool runPerftest() {
-    return false;
-}
+bool runPerftest() { return false; }
 #endif
 
 auto main(void) -> int {
@@ -53,9 +55,11 @@ auto main(void) -> int {
 
     State::GameState *gs = new State::GameState();
 
-    while (!::WindowShouldClose()) {
+    bool running = true;
 
-        gs->update();
+    while (!::WindowShouldClose() && running) {
+
+        if (gs->update() == State::WindowEvent::QUIT) running = false;
 
         ::BeginDrawing();
         ::BeginBlendMode(BLEND_ALPHA);
@@ -71,3 +75,9 @@ auto main(void) -> int {
     ::CloseWindow();
     return 0;
 }
+
+// SEEMS LIKE THE ENGINE IS GENERATION RIGHT AMOUNT OF MOVES...
+// I THOUGHT THIS WAS GOING TO TAKE A LONG TIME...
+// WE DID IT LIKE IN 28 mins. THATS GOOD>
+
+// BRB...
