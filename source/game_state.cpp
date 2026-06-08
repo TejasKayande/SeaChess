@@ -1,10 +1,5 @@
 
 #include "game_state.hpp"
-
-#include "../assets/sound/move.h"
-#include "../assets/sound/capture.h"
-#include "../assets/sound/castle.h"
-
 #include "engine/engine.hpp"
 
 using namespace State;
@@ -18,16 +13,8 @@ GameState::GameState() {
 
     m_move_list = MoveList();
 
-    Render::initAssets();
+    Assets::init();
     MoveGen::init();
-
-    ::Wave move_wav    = ::LoadWaveFromMemory(".wav", __move_wav, __move_wav_len);
-    ::Wave capture_wav = ::LoadWaveFromMemory(".wav", __capture_wav, __capture_wav_len);
-    ::Wave castle_wav  = ::LoadWaveFromMemory(".wav", __castle_wav, __castle_wav_len);
-
-    m_move_sound    = ::LoadSoundFromWave(move_wav);
-    m_capture_sound = ::LoadSoundFromWave(capture_wav);
-    m_castle_sound  = ::LoadSoundFromWave(castle_wav);
 
     m_last_move = Move();
 
@@ -113,21 +100,12 @@ GameState::GameState() {
 
     m_current_menu = &m_main_menu;
 
-    UnloadWave(move_wav);
-    UnloadWave(capture_wav);
-    UnloadWave(castle_wav);
-
     m_running = true;
 }
 
 GameState::~GameState() {
 
-    UnloadSound(m_castle_sound);
-    UnloadSound(m_capture_sound);
-    UnloadSound(m_move_sound);
-
-    Render::deinitAssets();
-
+    Assets::deinit();
     delete m_board;
 }
 
@@ -172,7 +150,7 @@ WindowEvent GameState::update() {
             m_sel_square = Chess::Square::invalid();
             m_last_move = best_move;
             move_made = true;
-            ::PlaySound(m_move_sound);
+            ::PlaySound(Assets::MOVE_SOUND);
         }
     }
 
@@ -212,7 +190,7 @@ WindowEvent GameState::update() {
                             switch (move.type) {
                                 case Move::KING_CASTLE:
                                 case Move::QUEEN_CASTLE: {
-                                    ::PlaySound(m_castle_sound);
+                                    ::PlaySound(Assets::CASTLE_SOUND);
                                     
                                 } break;
 
@@ -222,11 +200,11 @@ WindowEvent GameState::update() {
                                 case Move::PROMO_CAPTURE_ROOK:
                                 case Move::PROMO_CAPTURE_QUEEN:
                                 case Move::EN_PASSANT: {
-                                    ::PlaySound(m_capture_sound);
+                                    ::PlaySound(Assets::CAPTURE_SOUND);
                                 } break;
 
                                 default: {
-                                    ::PlaySound(m_move_sound);
+                                    ::PlaySound(Assets::MOVE_SOUND);
                                     break;
                                 } break;
                             }

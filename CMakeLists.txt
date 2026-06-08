@@ -19,6 +19,7 @@ add_library(chess_core
 add_executable(${PROJECT_NAME}
     source/main.cpp
     source/window.cpp
+    source/assets.cpp
     source/render.cpp
     source/game_state.cpp
 )

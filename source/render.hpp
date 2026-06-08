@@ -6,6 +6,7 @@
 #include "core/piece.hpp"
 #include "core/board.hpp"
 
+#include "assets.hpp"
 #include "menu.hpp"
 
 #include <raylib.h>
