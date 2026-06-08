@@ -11,6 +11,7 @@
 #include "render.hpp"
 #include "assets.hpp"
 #include "menu.hpp"
+#include "status_bar.hpp"
 
 #include <raylib.h>
 

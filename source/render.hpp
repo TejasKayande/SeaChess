@@ -8,6 +8,7 @@
 
 #include "assets.hpp"
 #include "menu.hpp"
+#include "status_bar.hpp"
 
 #include <raylib.h>
 
@@ -94,6 +95,6 @@ namespace Render {
 
     void renderMenu(const Window::Section &area, const Menu::Menu *menu, Theme theme);
     void renderInfo(const Window::Section &area);
-    void renderStatus(const Window::Section &area);
+    void renderStatus(const Window::Section &area, const StatusBar &status, Theme theme);
 
 } // namespace Render

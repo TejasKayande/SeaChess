@@ -54,7 +54,7 @@ void Assets::init() {
     DARK_QUEEN  = ::LoadTextureFromImage(dQueen_img);
     DARK_KING   = ::LoadTextureFromImage(dKing_img);
 
-    INTER_REGULAR_24 = ::LoadFontFromMemory(".ttf", __Inter_Regular_ttf, __Inter_Regular_ttf_len, 24, nullptr, 0);
+    INTER_REGULAR_24 = ::LoadFontFromMemory(".ttf", __Roboto_Regular_ttf, __Roboto_Regular_ttf_len, 16, nullptr, 0);
     INTER_REGULAR_50 = ::LoadFontFromMemory(".ttf", __Roboto_Regular_ttf, __Roboto_Regular_ttf_len, 50, nullptr, 0);
 
     ::Wave move_wav    = ::LoadWaveFromMemory(".wav", __move_wav, __move_wav_len);

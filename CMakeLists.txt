@@ -47,6 +47,14 @@ add_test(NAME ChessTests COMMAND Tests)
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
     target_compile_options(${PROJECT_NAME} PRIVATE /MP)
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>
+    )
+
+    target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>
+    )
 endif()
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})

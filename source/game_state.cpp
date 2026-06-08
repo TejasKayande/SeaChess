@@ -247,9 +247,15 @@ void GameState::render() {
     } else {
 
         Render::Visual visual = m_buildVisual();
+        StatusBar status = {
+            .turn = (m_board->getTurn() == Chess::Player::LIGHT) ? "L" : "D",
+            .game_mode = "Nomal Mode",
+            .check = MoveGen::Legal::inCheck(m_board, m_board->getTurn()) ? "+" : "-",
+            .eval = std::to_string(Engine::evaluate(m_board))
+        };
 
         Render::renderBoard(Window::getBoardSection(), visual);
-        Render::renderStatus(Window::getStatusSection());
+        Render::renderStatus(Window::getStatusSection(), status, m_theme);
         Render::renderInfo(Window::getInformationSection());
     }
 }

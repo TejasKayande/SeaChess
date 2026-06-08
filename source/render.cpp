@@ -197,7 +197,18 @@ void Render::renderInfo(const Window::Section &area) {
     ::DrawRectangleRec(area, ::Color{100, 100, 100, 255});
 }
 
-void Render::renderStatus(const Window::Section &area) {
+void Render::renderStatus(const Window::Section &area, const StatusBar &status, Theme theme) {
 
-    ::DrawRectangleRec(area, ::Color{18, 18, 18, 255});
+    ::DrawRectangleRec(area, theme.menu_bg);
+
+    std::string final;
+
+    final += "Turn: " + status.turn + " | "  + 
+             "Game Mode: " + status.game_mode + " | " + 
+             "Player in Check: " + status.check + " | " + 
+             "Evaluation: " + status.eval;
+
+    ::DrawTextEx(Assets::INTER_REGULAR_24, final.c_str(),
+                 Vector2{ (float)area.x + 10, (float)area.y + 2 },
+                 16, 1, ::Color({255, 255, 255, 255}));
 }
