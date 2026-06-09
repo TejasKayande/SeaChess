@@ -15,6 +15,7 @@
 
 #include "../assets/font/Inter-Regular.h"
 #include "../assets/font/Roboto-Regular.h"
+#include "../assets/font/JetBrainsMono-Regular.h"
 
 #include "../assets/sound/move.h"
 #include "../assets/sound/capture.h"
@@ -54,8 +55,9 @@ void Assets::init() {
     DARK_QUEEN  = ::LoadTextureFromImage(dQueen_img);
     DARK_KING   = ::LoadTextureFromImage(dKing_img);
 
-    INTER_REGULAR_24 = ::LoadFontFromMemory(".ttf", __Roboto_Regular_ttf, __Roboto_Regular_ttf_len, 16, nullptr, 0);
-    INTER_REGULAR_50 = ::LoadFontFromMemory(".ttf", __Roboto_Regular_ttf, __Roboto_Regular_ttf_len, 50, nullptr, 0);
+    ROBERTO_REGULAR        = ::LoadFontFromMemory(".ttf", __Roboto_Regular_ttf, __Roboto_Regular_ttf_len, 128, nullptr, 0);
+    INTER_REGULAR          = ::LoadFontFromMemory(".ttf", __Inter_Regular_ttf, __Inter_Regular_ttf_len, 128, nullptr, 0);
+    JETBRAINS_MONO_REGULAR = ::LoadFontFromMemory(".ttf", __JetBrainsMono_Regular_ttf, __JetBrainsMono_Regular_ttf_len, 128, nullptr, 0);
 
     ::Wave move_wav    = ::LoadWaveFromMemory(".wav", __move_wav, __move_wav_len);
     ::Wave capture_wav = ::LoadWaveFromMemory(".wav", __capture_wav, __capture_wav_len);
@@ -108,6 +110,7 @@ void Assets::deinit() {
     ::UnloadTexture(DARK_QUEEN);
     ::UnloadTexture(DARK_KING);
 
-    ::UnloadFont(INTER_REGULAR_24);
-    ::UnloadFont(INTER_REGULAR_50);
+    ::UnloadFont(ROBERTO_REGULAR);
+    ::UnloadFont(INTER_REGULAR);
+    ::UnloadFont(JETBRAINS_MONO_REGULAR);
 }

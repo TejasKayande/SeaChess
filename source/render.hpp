@@ -23,44 +23,50 @@ struct Theme {
     ::Color check;
 
     ::Color menu_bg;
+    
+    ::Font *font;
 };
 
 namespace Themes {
 
-    inline constexpr Theme DEFAULT = {
+    inline const Theme DEFAULT = {
         .board_dark  = ::Color{0x44, 0x44, 0x44, 0xFF},
         .board_light = ::Color{0xEE, 0xEE, 0xEE, 0xFF},
         .highlight   = ::Color{255, 255, 0, 200},
         .legal       = ::Color{255, 0, 255, 200},
         .check       = ::Color{255, 0, 0, 200},
-        .menu_bg     = ::Color{0x44, 0x44, 0x44, 0x99}
+        .menu_bg     = ::Color{0x44, 0x44, 0x44, 0x99},
+        .font        = &Assets::JETBRAINS_MONO_REGULAR
     };
 
-    inline constexpr Theme CLASSIC_WOOD = {
+    inline const Theme CLASSIC_WOOD = {
         .board_dark  = ::Color{181, 136, 99, 255},
         .board_light = ::Color{240, 217, 181, 255},
         .highlight   = ::Color{255, 215, 0, 180},
         .legal       = ::Color{50, 205, 50, 180},
         .check       = ::Color{220, 20, 60, 200},
-        .menu_bg     = ::Color{40, 30, 20, 180}
+        .menu_bg     = ::Color{40, 30, 20, 180},
+        .font        = &Assets::JETBRAINS_MONO_REGULAR
     };
 
-    inline constexpr Theme SLATE_BLUE = {
+    inline const Theme SLATE_BLUE = {
         .board_dark  = ::Color{74, 92, 122, 255},
         .board_light = ::Color{222, 227, 230, 255},
         .highlight   = ::Color{255, 193, 7, 180},
         .legal       = ::Color{0, 188, 212, 180},
         .check       = ::Color{244, 67, 54, 200},
-        .menu_bg     = ::Color{30, 41, 59, 180}
+        .menu_bg     = ::Color{30, 41, 59, 180},
+        .font        = &Assets::JETBRAINS_MONO_REGULAR
     };
 
-    inline constexpr Theme EMERALD = {
+    inline const Theme EMERALD = {
         .board_dark  = ::Color{46, 94, 62, 255},
         .board_light = ::Color{225, 235, 220, 255},
         .highlight   = ::Color{255, 202, 40, 180},
         .legal       = ::Color{76, 175, 80, 180},
         .check       = ::Color{229, 57, 53, 200},
-        .menu_bg     = ::Color{22, 44, 29, 180}
+        .menu_bg     = ::Color{22, 44, 29, 180},
+        .font        = &Assets::JETBRAINS_MONO_REGULAR
     };
 
 } // namespace Themes
@@ -87,9 +93,6 @@ namespace Render {
         bool show_sel;
         bool show_check;
     };
-
-    void initAssets();
-    void deinitAssets();
 
     void renderBoard(const Window::Section &area, const Visual &visual);
 

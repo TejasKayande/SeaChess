@@ -18,8 +18,9 @@ namespace Assets {
     inline ::Texture2D DARK_QUEEN;
     inline ::Texture2D DARK_KING;
 
-    inline ::Font INTER_REGULAR_24;
-    inline ::Font INTER_REGULAR_50;
+    inline ::Font ROBERTO_REGULAR;
+    inline ::Font INTER_REGULAR;
+    inline ::Font JETBRAINS_MONO_REGULAR;
 
     inline ::Sound MOVE_SOUND;
     inline ::Sound CAPTURE_SOUND;

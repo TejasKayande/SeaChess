@@ -45,7 +45,7 @@ namespace { // Anonymous namespace for helper functions
 
         if (sq.file() == 0) {
             std::string ch = std::to_string(rank + 1);
-            ::DrawTextEx(Assets::INTER_REGULAR_24, ch.c_str(), Vector2{(float)xx, (float)yy}, 24, 2, text_color);
+            ::DrawTextEx(*theme.font, ch.c_str(), Vector2{(float)xx, (float)yy}, 24, 2, text_color);
         }
 
         if (sq.rank() == 7) {
@@ -53,7 +53,7 @@ namespace { // Anonymous namespace for helper functions
             yy = py + Window::SQUARE_DIM - 25;
             char ch[2] = { '\0' };
             ch[0] = (char)('h' - file);
-            ::DrawTextEx(Assets::INTER_REGULAR_24, ch, Vector2{(float)xx, (float)yy}, 24, 2, text_color);
+            ::DrawTextEx(*theme.font, ch, Vector2{(float)xx, (float)yy}, 24, 2, text_color);
         }
     }
 
@@ -166,9 +166,9 @@ void Render::renderMenu(const Window::Section &area, const Menu::Menu *menu, The
     int line_gap = 100;
 
     const int WINDOW_WIDTH_CENTER = Window::WINDOW_WIDTH / 2;
-    int menu_title_width = ::MeasureTextEx(Assets::INTER_REGULAR_50, menu->getTitle().c_str(), 50, 2).x;
+    int menu_title_width = ::MeasureTextEx(*theme.font, menu->getTitle().c_str(), 50, 2).x;
 
-    ::DrawTextEx(Assets::INTER_REGULAR_50, menu->getTitle().c_str(),
+    ::DrawTextEx(*theme.font, menu->getTitle().c_str(),
                  Vector2{ (float)WINDOW_WIDTH_CENTER - (menu_title_width / 2), (float)50 },
                  50, 2, ::Color({255, 255, 255, 255}));
 
@@ -183,9 +183,9 @@ void Render::renderMenu(const Window::Section &area, const Menu::Menu *menu, The
             text_color = ::Color({255, 0, 255, 255});
         }
 
-        int width = ::MeasureTextEx(Assets::INTER_REGULAR_50, item.label.c_str(), 50, 2).x;
+        int width = ::MeasureTextEx(*theme.font, item.label.c_str(), 50, 2).x;
 
-        ::DrawTextEx(Assets::INTER_REGULAR_50, item.label.c_str(),
+        ::DrawTextEx(*theme.font, item.label.c_str(),
                      Vector2{ (float)(Window::WINDOW_WIDTH / 2) - (width / 2), (float)50 + (line_gap * i)},
                      50, 2, text_color);
         i++;
@@ -208,7 +208,7 @@ void Render::renderStatus(const Window::Section &area, const StatusBar &status, 
              "Player in Check: " + status.check + " | " + 
              "Evaluation: " + status.eval;
 
-    ::DrawTextEx(Assets::INTER_REGULAR_24, final.c_str(),
+    ::DrawTextEx(*theme.font, final.c_str(),
                  Vector2{ (float)area.x + 10, (float)area.y + 2 },
                  16, 1, ::Color({255, 255, 255, 255}));
 }
