@@ -101,6 +101,15 @@ GameState::GameState() {
     m_current_menu = &m_main_menu;
 
     m_running = true;
+
+    Chess::Square sq(0);
+    std::cout << sq.toString() << std::endl;
+
+    Chess::Square sq2(63);
+    std::cout << sq2.toString() << std::endl;
+
+    Chess::Square sq3(sq.index ^ 5);
+    std::cout << sq3.toString() << std::endl;
 }
 
 GameState::~GameState() {
@@ -132,7 +141,6 @@ WindowEvent GameState::update() {
 
     if (::IsKeyPressed(KEY_LEFT)) {
         if (m_board->unMakeMove(m_last_move)) {
-            m_board->changeTurn();
             m_move_list.clear();
             m_last_move = Move();
             m_sel_square = Chess::Square::invalid();
@@ -141,15 +149,18 @@ WindowEvent GameState::update() {
 
     bool move_made = false;
 
-    if (::IsKeyPressed(KEY_UP)) {
-        if (m_board->getTurn() == Chess::Player::DARK) {
-            Move best_move = Engine::getBestMove(m_board);
-            m_board->makeMove(best_move);
-            m_board->changeTurn();
-            m_move_list.clear();
-            m_sel_square = Chess::Square::invalid();
-            m_last_move = best_move;
-            move_made = true;
+    if (m_board->getTurn() == Chess::Player::DARK) {
+        Move best_move = Engine::getBestMove(m_board);
+        m_board->makeMove(best_move);
+        m_move_list.clear();
+        m_sel_square = Chess::Square::invalid();
+        m_last_move = best_move;
+        move_made = true;
+        if (best_move.type == Move::KING_CASTLE || best_move.type == Move::QUEEN_CASTLE) {
+            ::PlaySound(Assets::CASTLE_SOUND);
+        } else if (best_move.type == Move::CAPTURE || best_move.type == Move::PROMO_CAPTURE_KNIGHT || best_move.type == Move::PROMO_CAPTURE_BISHOP || best_move.type == Move::PROMO_CAPTURE_ROOK || best_move.type == Move::PROMO_CAPTURE_QUEEN || best_move.type == Move::EN_PASSANT) {
+            ::PlaySound(Assets::CAPTURE_SOUND);
+        } else {
             ::PlaySound(Assets::MOVE_SOUND);
         }
     }
@@ -184,8 +195,6 @@ WindowEvent GameState::update() {
                 for (const Move &move : m_move_list) {
                     if (move.to == sq) {
                         if (m_board->makeMove(move)) {
-
-                            m_board->changeTurn();
 
                             switch (move.type) {
                                 case Move::KING_CASTLE:

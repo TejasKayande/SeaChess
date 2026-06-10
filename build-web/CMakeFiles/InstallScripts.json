@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/Tejas/Marcal/Probes/SeaChess/build-web/cmake_install.cmake",
+		"C:/Users/Tejas/Marcal/Probes/SeaChess/build-web/dependencies/raylib/cmake_install.cmake",
+		"C:/Users/Tejas/Marcal/Probes/SeaChess/build-web/dependencies/raylib/raylib/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

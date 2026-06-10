@@ -1,0 +1,28 @@
+dependencies/raylib/raylib/CMakeFiles/raylib.dir/rshapes.c.o: \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\rshapes.c \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\raylib.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\compat\stdarg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\stdarg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdarg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_header_macro.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg___gnuc_va_list.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_va_list.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_va_arg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg___va_copy.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_va_copy.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\stdbool.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdbool.h \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\config.h \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\rlgl.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\compat\math.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\math.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\features.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\bits\alltypes.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\float.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\float.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__float_header_macro.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__float_float.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__float_infinity_nan.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\compat\stdlib.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdlib.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\alloca.h

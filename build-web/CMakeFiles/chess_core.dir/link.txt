@@ -1,0 +1,2 @@
+C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\emar.exe qc libchess_core.a CMakeFiles/chess_core.dir/source/core/board.cpp.o CMakeFiles/chess_core.dir/source/core/movegen.cpp.o CMakeFiles/chess_core.dir/source/core/perft.cpp.o CMakeFiles/chess_core.dir/source/engine/engine.cpp.o
+C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\emranlib.exe libchess_core.a

@@ -312,7 +312,6 @@ bool Board::makeMove(const Move& m) {
             }
 
             move_made = true;
-            return true;
 
         } break;
 
@@ -324,7 +323,7 @@ bool Board::makeMove(const Move& m) {
             int dir = (moving_piece.color() == PColor::LIGHT) ? -8 : +8;
             _en_passant_target = Square(m.to.toIndex() + dir);
 
-            return true;
+            move_made = true;
 
         } break;
 
@@ -347,8 +346,7 @@ bool Board::makeMove(const Move& m) {
                                 ~(CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE)
                               : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
 
-            return true;
-
+            move_made = true;
         } break;
 
         case MoveType::QUEEN_CASTLE: {
@@ -383,7 +381,7 @@ bool Board::makeMove(const Move& m) {
             Square captured_pawn_sq(m.to.toIndex() + dir);
             setPieceAt(captured_pawn_sq, Piece::nopiece());
 
-            return true;
+            move_made = true;
         }
 
         case MoveType::PROMO_CAPTURE_QUEEN:
@@ -391,7 +389,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.from, Piece::nopiece());
             setPieceAt(m.to, Piece(PType::QUEEN, moving_piece.color()));
 
-            return true;
+            move_made = true;
         }
 
         case MoveType::PROMO_CAPTURE_ROOK:
@@ -399,7 +397,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.from, Piece::nopiece());
             setPieceAt(m.to, Piece(PType::ROOK, moving_piece.color()));
 
-            return true;
+            move_made = true;
         }
 
         case MoveType::PROMO_CAPTURE_BISHOP:
@@ -407,7 +405,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.from, Piece::nopiece());
             setPieceAt(m.to, Piece(PType::BISHOP, moving_piece.color()));
 
-            return true;
+            move_made = true;
         }
 
         case MoveType::PROMO_CAPTURE_KNIGHT:
@@ -415,11 +413,13 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.from, Piece::nopiece());
             setPieceAt(m.to, Piece(PType::KNIGHT, moving_piece.color()));
 
-            return true;
+            move_made = true;
         }
 
         default: {} break;
     }
+
+    if (move_made) changeTurn();
 
     return move_made;
 }

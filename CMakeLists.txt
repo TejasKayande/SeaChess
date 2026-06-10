@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(dependencies/raylib)
-add_subdirectory(dependencies/googletest)
+# add_subdirectory(dependencies/googletest)
 enable_testing()
 
 add_library(chess_core
@@ -26,25 +26,29 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} PRIVATE chess_core raylib)
 
-# NOTE(Tejas): Tests
-add_executable(Tests 
-    tests/test_main.cpp
-    tests/test_square.cpp
-    tests/test_piece.cpp
-    tests/test_board.cpp
-    tests/test_fen.cpp
-    tests/test_movegen.cpp
-)
+if(NOT EMSCRIPTEN)
+    add_subdirectory(dependencies/googletest)
+    enable_testing()
 
-target_link_libraries(Tests
-    PRIVATE chess_core
-    gtest
-    gtest_main
-)
+    add_executable(Tests
+        tests/test_main.cpp
+        tests/test_square.cpp
+        tests/test_piece.cpp
+        tests/test_board.cpp
+        tests/test_fen.cpp
+        tests/test_movegen.cpp
+    )
 
-add_test(NAME ChessTests COMMAND Tests)
+    target_link_libraries(Tests
+        PRIVATE chess_core
+        gtest
+        gtest_main
+    )
 
-if (WIN32)
+    add_test(NAME ChessTests COMMAND Tests)
+endif()
+
+if (WIN32 AND NOT EMSCRIPTEN)
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
     target_compile_options(${PROJECT_NAME} PRIVATE /MP)
 
@@ -58,3 +62,19 @@ if (WIN32)
 endif()
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+
+if(EMSCRIPTEN)
+
+    set_target_properties(${PROJECT_NAME}
+        PROPERTIES
+        SUFFIX ".html"
+    )
+
+    target_link_options(${PROJECT_NAME}
+        PRIVATE
+        "-sUSE_GLFW=3"
+        "-sASYNCIFY"
+        "--preload-file=${CMAKE_SOURCE_DIR}/assets@/assets"
+    )
+
+endif()

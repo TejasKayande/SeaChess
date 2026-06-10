@@ -8,6 +8,9 @@
 
 #include <raylib.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
 
 /*
 TODO(Tejas):
@@ -44,6 +47,22 @@ bool runPerftest() {
 bool runPerftest() { return false; }
 #endif
 
+static State::GameState *gs = nullptr;
+static bool running;
+
+void mainLoop(void) {
+
+    if (gs->update() == State::WindowEvent::QUIT) running = false;
+
+    ::BeginDrawing();
+    ::BeginBlendMode(BLEND_ALPHA);
+    {
+        ::ClearBackground(BLACK);
+        gs->render();
+    }
+    ::EndDrawing();
+}
+
 auto main(void) -> int {
 
     {
@@ -53,22 +72,27 @@ auto main(void) -> int {
     ::InitWindow(Window::WINDOW_WIDTH, Window::WINDOW_HEIGHT, "Chess");
     ::InitAudioDevice();
 
-    State::GameState *gs = new State::GameState();
+    gs = new State::GameState();
+    running = true;
 
-    bool running = true;
-
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(mainLoop, 0, true);
+#else
     while (!::WindowShouldClose() && running) {
 
-        if (gs->update() == State::WindowEvent::QUIT) running = false;
+        mainLoop();
 
-        ::BeginDrawing();
-        ::BeginBlendMode(BLEND_ALPHA);
-        {
-            ::ClearBackground(BLACK);
-            gs->render();
-        }
-        ::EndDrawing();
+        // if (gs->update() == State::WindowEvent::QUIT) running = false;
+
+        // ::BeginDrawing();
+        // ::BeginBlendMode(BLEND_ALPHA);
+        // {
+        //     ::ClearBackground(BLACK);
+        //     gs->render();
+        // }
+        // ::EndDrawing();
     }
+#endif
 
     delete gs;
 

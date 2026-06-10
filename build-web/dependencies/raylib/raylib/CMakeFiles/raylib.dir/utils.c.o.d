@@ -1,0 +1,36 @@
+dependencies/raylib/raylib/CMakeFiles/raylib.dir/utils.c.o: \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\utils.c \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\raylib.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\compat\stdarg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\stdarg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdarg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_header_macro.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg___gnuc_va_list.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_va_list.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_va_arg.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg___va_copy.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stdarg_va_copy.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\stdbool.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdbool.h \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\config.h \
+  C:\Users\Tejas\Marcal\Probes\SeaChess\dependencies\raylib\src\utils.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\compat\stdlib.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdlib.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\features.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\bits\alltypes.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\alloca.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdio.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\wasi\api.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\stddef.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stddef.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stddef_header_macro.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stddef_ptrdiff_t.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stddef_size_t.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stddef_wchar_t.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stddef_null.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\__stddef_offsetof.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\lib\clang\23\include\stdint.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\stdint.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\compat\string.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\string.h \
+  C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\cache\sysroot\include\strings.h

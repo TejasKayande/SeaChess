@@ -1,0 +1,2 @@
+C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\emar.exe qc libraylib.a CMakeFiles/raylib.dir/raudio.c.o CMakeFiles/raylib.dir/rcore.c.o CMakeFiles/raylib.dir/rmodels.c.o CMakeFiles/raylib.dir/rshapes.c.o CMakeFiles/raylib.dir/rtext.c.o CMakeFiles/raylib.dir/rtextures.c.o CMakeFiles/raylib.dir/utils.c.o
+C:\Users\Tejas\Marcal\Probes\Third-Party-Code\emsdk\upstream\emscripten\emranlib.exe libraylib.a

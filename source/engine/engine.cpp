@@ -1,10 +1,12 @@
 
 #include "engine.hpp"
+#include "../core/movegen.hpp"
 
 #include <random>
 #include <iostream>
 #include <cstdlib>
 #include <time.h>
+#include <bit>
 
 namespace {
 
@@ -14,60 +16,157 @@ namespace {
     constexpr int ROOK_VALUE   = 500;
     constexpr int QUEEN_VALUE  = 900;
 
-    int getMaterialCountForPiece(Chess::Board *board, Chess::Piece piece) {
+    constexpr int BISHOP_PAIR_BONUS = 30;
 
-        BitBoard pieces_bb = board->getPiecesOfType(piece.type(), piece.color());
-        if (pieces_bb == 0) return 0;
+    // NOTE(Tejas): This assumes light is at the bottom, we have to flip the
+    //              ranks to get the DARK_KNIGHT_PST.
+    constexpr int KNIGHT_PST[64] = {
+        -50,-40,-30,-30,-30,-30,-40,-50,
+        -40,-20,  0,  0,  0,  0,-20,-40,
+        -30,  0, 10, 15, 15, 10,  0,-30,
+        -30,  5, 15, 20, 20, 15,  5,-30,
+        -30,  0, 15, 20, 20, 15,  0,-30,
+        -30,  5, 10, 15, 15, 10,  5,-30,
+        -40,-20,  0,  5,  5,  0,-20,-40,
+        -50,-40,-30,-30,-30,-30,-40,-50
+    };
 
-        int count = 0;
-        while (pieces_bb) {
-            Base::popLSB(pieces_bb);
-            switch (piece.type()) {
-                case Chess::Piece::PAWN:   count += PAWN_VALUE; break;
-                case Chess::Piece::KNIGHT: count += KNIGHT_VALUE; break;
-                case Chess::Piece::BISHOP: count += BISHOP_VALUE; break;
-                case Chess::Piece::ROOK:   count += ROOK_VALUE; break;
-                case Chess::Piece::QUEEN:  count += QUEEN_VALUE; break;
-                default: break;
-            }
+    constexpr int mirrorSquare(int sq_idx) {
+        return sq_idx ^ 56;
+    }
+
+    int minmax(Chess::Board *board, int depth, int alpha, int beta) {
+
+        if (depth == 0) return Engine::evaluate(board);
+
+        bool maximizing = (board->getTurn() == Chess::Player::LIGHT);
+
+        MoveList move_list;
+        MoveGen::Legal::generateAllMoves(board, move_list);
+        
+        if (move_list.empty()) {
+            if (MoveGen::Legal::inCheck(board, board->getTurn()))
+                return maximizing ? -100000 : 100000;
+            return 0;
         }
 
-        return count;
+        if (maximizing) {
+
+            int best = -100000;
+            for (Move move : move_list) {
+                Chess::Board temp_board = *board;
+                temp_board.makeMove(move);
+                int eval = minmax(&temp_board, depth - 1, alpha, beta);
+                best = std::max(best, eval);
+
+                alpha = std::max(alpha, eval);
+                if (beta <= alpha) break;
+            }
+
+            return best;
+
+        } else {
+
+            int best = 100000;
+            for (Move move : move_list) {
+                Chess::Board temp_board = *board;
+                temp_board.makeMove(move);
+                int eval = minmax(&temp_board, depth - 1, alpha, beta);
+                best = std::min(best, eval);
+
+                beta = std::min(beta, eval);
+                if (beta <= alpha) break;
+            }
+
+            return best;
+        }
+
+        return 0; // should never reach here
     }
 
 } // namespace Anonymous
 
 int Engine::evaluate(Chess::Board *board) {
 
-    int score = 0;
+    int material = 0, pst = 0, bishop_pair = 0;
 
-    score += getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::PAWN, Chess::Player::LIGHT));
-    score += getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::KNIGHT, Chess::Player::LIGHT));
-    score += getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::BISHOP, Chess::Player::LIGHT));
-    score += getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::ROOK, Chess::Player::LIGHT));
-    score += getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::QUEEN, Chess::Player::LIGHT));
+    const struct MaterialValue {
+        Chess::PType type;
+        int value;
+    } pieces[] = {
+        { Chess::Piece::PAWN,   PAWN_VALUE   },
+        { Chess::Piece::KNIGHT, KNIGHT_VALUE },
+        { Chess::Piece::BISHOP, BISHOP_VALUE },
+        { Chess::Piece::ROOK,   ROOK_VALUE   },
+        { Chess::Piece::QUEEN,  QUEEN_VALUE  }
+    };
 
-    score -= getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::PAWN, Chess::Player::DARK));
-    score -= getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::KNIGHT, Chess::Player::DARK));
-    score -= getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::BISHOP, Chess::Player::DARK));
-    score -= getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::ROOK, Chess::Player::DARK));
-    score -= getMaterialCountForPiece(board, Chess::Piece(Chess::Piece::QUEEN, Chess::Player::DARK));
+    // NOTE(Tejas): Count the material.
+    for (auto entry : pieces) {
 
-    return score; 
+        BitBoard bb = board->getPiecesOfType(entry.type, Chess::Player::LIGHT);
+        while (bb) {
+            int sq = Base::popLSB(bb);
+            material += entry.value;
+            if (entry.type == Chess::Piece::KNIGHT) pst += KNIGHT_PST[sq];
+        }
+
+        bb = board->getPiecesOfType(entry.type, Chess::Player::DARK);
+        while (bb) {
+            int sq = Base::popLSB(bb);
+            material -= entry.value;
+            if (entry.type == Chess::Piece::KNIGHT) pst -= KNIGHT_PST[mirrorSquare(sq)];
+        }
+    }
+
+    // NOTE(Tejas): A bishop pair is considered an advantage, so we will give a small bonus for it
+    BitBoard whiteBishops = board->getPiecesOfType(Chess::Piece::BISHOP, Chess::Player::LIGHT);
+    BitBoard blackBishops = board->getPiecesOfType(Chess::Piece::BISHOP, Chess::Player::DARK);
+
+    // NOTE(Tejas): A player could have more than 2 bishops but I think its okay
+    //              if we just award only the pair bonus.
+    if (std::popcount(whiteBishops) >= 2) bishop_pair += BISHOP_PAIR_BONUS;
+    if (std::popcount(blackBishops) >= 2) bishop_pair -= BISHOP_PAIR_BONUS;
+
+    return material + pst + bishop_pair;
 }
 
 Move Engine::getBestMove(Chess::Board *board) {
 
+    int depth = 3;
+
+    Move best_move;
+
     MoveList move_list;
     MoveGen::Legal::generateAllMoves(board, move_list);
+    if (move_list.empty()) return best_move;
 
-    if (move_list.empty()) {
-        return Move();
+    bool maximizing = board->getTurn() == Chess::Player::LIGHT;
+
+    int best_score = maximizing ? -100000 : 100000;
+
+    for (Move move : move_list) {
+
+        Chess::Board temp_board = *board;
+
+        temp_board.makeMove(move);
+
+        int eval = minmax(&temp_board, depth - 1, -100000, 100000);
+
+        std::cout << "Move: " << move.from.toString() << " -> " << move.to.toString() << " Eval: " << eval << std::endl;
+
+        if (maximizing) {
+            if (eval > best_score) {
+                best_score = eval;
+                best_move = move;
+            }
+        } else {
+            if (eval < best_score) {
+                best_score = eval;
+                best_move = move;
+            }
+        }
     }
 
-    srand(time(NULL));
-    int rand_idx = rand() % move_list.size();
-
-    std::cout << "Eval for " << (int)board->getTurn() << ": " << evaluate(board) << std::endl;
-    return move_list[rand_idx];
+    return best_move;
 }
