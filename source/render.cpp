@@ -214,10 +214,10 @@ void Render::renderStatus(const Window::Section &area, const StatusBar &status, 
 
 void Render::renderGameOver(const Window::Section &area, const std::string &result, Theme theme) {
 
-    ::DrawRectangleRec(area, ::Color{100, 100, 100, 190});
+    ::DrawRectangleRec(area, ::Color{100, 100, 100, 240});
     int text_width = ::MeasureTextEx(*theme.font, result.c_str(), 50, 2).x;
 
     ::DrawTextEx(*theme.font, result.c_str(),
                  Vector2{ (float)(Window::WINDOW_WIDTH / 2) - (text_width / 2), (float)area.y + 100 },
-                 50, 2, ::Color({255, 0, 0, 255}));
+                 50, 2, theme.highlight);
 }

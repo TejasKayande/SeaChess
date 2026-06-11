@@ -169,7 +169,7 @@ WindowEvent GameState::update() {
 
     if (!m_running) return WindowEvent::QUIT;
 
-    if (::IsKeyPressed(KEY_X)) Window::toggleMenu();
+    if (::IsKeyPressed(KEY_ESCAPE)) Window::toggleMenu();
     if (::IsKeyPressed(KEY_F)) m_is_board_flipped = !m_is_board_flipped;
 
     if (Window::isOnMenu()) {
@@ -183,7 +183,7 @@ WindowEvent GameState::update() {
         }
     }
 
-    if (::IsKeyPressed(KEY_LEFT)) {
+    if (::IsKeyPressed(KEY_LEFT) && !m_is_game_over) {
         if (m_board->unMakeMove(m_last_move)) {
             m_move_list.clear();
             m_last_move = Move();
