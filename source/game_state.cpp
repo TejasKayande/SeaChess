@@ -20,6 +20,50 @@ GameState::GameState() {
 
     m_theme = Themes::DEFAULT;
 
+    m_play_menu = Menu::Menu("Play Menu", {
+        {
+            "As White against Engine",
+            [this]() { 
+                m_playing_engine = true; 
+                m_engine_player = Chess::Player::DARK;
+                m_current_menu = &m_main_menu;
+                m_is_board_flipped = true;
+                Window::toggleMenu();
+            },
+            nullptr
+        },
+
+        {
+            "As Black against Engine",
+            [this]() { 
+                m_playing_engine = true; 
+                m_engine_player = Chess::Player::LIGHT;
+                m_current_menu = &m_main_menu;
+                m_is_board_flipped = false;
+                Window::toggleMenu();
+            },
+            nullptr
+        },
+
+        {
+            "Two Player Local Game",
+            [this]() { 
+                m_playing_engine = false; 
+                m_current_menu = &m_main_menu;
+                Window::toggleMenu();
+            },
+            nullptr
+        },
+
+        {
+            "Back to Main Menu",
+            [this]() { 
+                m_current_menu = &m_main_menu; 
+            },
+            nullptr
+        }
+    });
+
     m_theme_menu = Menu::Menu("Theme Menu", {
         { 
             "Default", 
@@ -87,6 +131,8 @@ GameState::GameState() {
             nullptr 
         },
 
+        { "Play", []() { }, &m_play_menu },
+
         { "Themes", []() { }, &m_theme_menu },
 
         { 
@@ -101,7 +147,8 @@ GameState::GameState() {
     m_current_menu = &m_main_menu;
     m_running = true;
 
-    m_board->setFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+    m_playing_engine = true;
+    m_engine_player = Chess::Player::DARK;
 }
 
 GameState::~GameState() {
@@ -138,7 +185,7 @@ WindowEvent GameState::update() {
 
     bool move_made = false;
 
-    if (m_board->getTurn() == Chess::Player::DARK && true) {
+    if (m_playing_engine && m_board->getTurn() == m_engine_player) {
         Move best_move = Engine::getBestMove(m_board);
         m_board->makeMove(best_move);
         m_move_list.clear();

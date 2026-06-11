@@ -52,7 +52,11 @@ namespace State {
         Menu::Menu *m_current_menu;
 
         Menu::Menu m_main_menu;
+        Menu::Menu m_play_menu;
         Menu::Menu m_theme_menu;
+
+        bool m_playing_engine;
+        Chess::Player m_engine_player;
 
     private:
 
