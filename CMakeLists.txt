@@ -52,13 +52,13 @@ if (WIN32 AND NOT EMSCRIPTEN)
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
     target_compile_options(${PROJECT_NAME} PRIVATE /MP)
 
-    # set_target_properties(${PROJECT_NAME} PROPERTIES
-    #     WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>
-    # )
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>
+    )
 
-    # target_link_options(${PROJECT_NAME} PRIVATE
-    #     $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>
-    # )
+    target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>
+    )
 endif()
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})

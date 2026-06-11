@@ -100,4 +100,6 @@ namespace Render {
     void renderInfo(const Window::Section &area);
     void renderStatus(const Window::Section &area, const StatusBar &status, Theme theme);
 
+    void renderGameOver(const Window::Section &area, const std::string &result, Theme theme);
+
 } // namespace Render

@@ -119,6 +119,12 @@ GameState::GameState() {
             "New Game", 
             [this]() { 
                 m_board->reset(); 
+                m_game_over_text = "";
+                m_is_game_over = false;
+                m_last_move = Move();
+                m_move_list.clear();
+                m_sel_square = Chess::Square::invalid();
+                Window::toggleMenu();
             }, 
             nullptr 
         },
@@ -149,6 +155,8 @@ GameState::GameState() {
 
     m_playing_engine = true;
     m_engine_player = Chess::Player::DARK;
+
+    m_is_game_over = false;
 }
 
 GameState::~GameState() {
@@ -270,7 +278,12 @@ WindowEvent GameState::update() {
 
     if (move_made) {
         if (MoveGen::Legal::isCheckmate(m_board, m_board->getTurn())) {
-            std::cout << "Checkmate! Player " << ((m_board->getTurn() == Chess::Player::LIGHT) ? "Dark" : "Light") << " wins!" << std::endl;
+            m_is_game_over = true;
+            m_game_over_text = "Player " + std::string((m_board->getTurn() == Chess::Player::LIGHT) ? "Dark" : "Light") + " wins!";
+        } 
+        else if (MoveGen::Legal::isStalemate(m_board, m_board->getTurn())) {
+            m_is_game_over = true;
+            m_game_over_text = "Stalemate!";
         }
     }
 
@@ -296,6 +309,10 @@ void GameState::render() {
         Render::renderBoard(Window::getBoardSection(), visual);
         Render::renderStatus(Window::getStatusSection(), status, m_theme);
         Render::renderInfo(Window::getInformationSection());
+
+        if (m_is_game_over) {
+            Render::renderGameOver(Window::getBoardSection(), m_game_over_text, m_theme);
+        }
     }
 }
 

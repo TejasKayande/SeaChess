@@ -58,6 +58,10 @@ namespace State {
         bool m_playing_engine;
         Chess::Player m_engine_player;
 
+        // TODO(Tejas): Refactor
+        bool m_is_game_over;
+        std::string m_game_over_text;
+
     private:
 
         Render::Visual m_buildVisual();

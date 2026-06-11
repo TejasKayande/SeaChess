@@ -909,6 +909,20 @@ bool Legal::isCheckmate(const Chess::Board *board, Chess::Player player) {
     return legal_moves.empty();
 }
 
+bool Legal::isStalemate(const Chess::Board *board, Chess::Player player) {
+
+    Chess::Player enemy = (player == Chess::Player::LIGHT)
+                        ? Chess::Player::DARK
+                        : Chess::Player::LIGHT;
+
+    if (inCheck(board, player)) return false;
+
+    MoveList legal_moves;
+    Legal::generateAllMoves(board, legal_moves);
+
+    return legal_moves.empty();
+}
+
 bool Legal::inCheck(const Chess::Board *board, Chess::Player player) {
 
     Chess::Player enemy = (player == Chess::Player::LIGHT)

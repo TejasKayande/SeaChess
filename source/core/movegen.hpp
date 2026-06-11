@@ -49,6 +49,7 @@ namespace MoveGen {
     namespace Legal {
 
         bool isCheckmate(const Chess::Board *board, Chess::Player player);
+        bool isStalemate(const Chess::Board *board, Chess::Player player);
 
         bool inCheck(const Chess::Board *board, Chess::Player player);
 
