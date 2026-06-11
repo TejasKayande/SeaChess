@@ -16,13 +16,7 @@ unsigned long PerfTest::perft(Chess::Board* board, int depth) {
     for (const Move& move : move_list) {
 
         Chess::Board copy = *board;
-
-        if (copy.makeMove(move)) {
-
-            copy.changeTurn();
-
-            nodes += perft(&copy, depth - 1);
-        }
+        if (copy.makeMove(move)) nodes += perft(&copy, depth - 1);
     }
 
     return nodes;
@@ -41,21 +35,26 @@ void PerfTest::divide(Chess::Board* board, int depth) {
 
     auto start = high_resolution_clock::now();
 
-    for (const Move& move : move_list) {
+    MoveList sorted_moves;
+    for (int i = 0; i < move_list.size(); i++) sorted_moves.push_back(move_list[i]);
+    std::sort(sorted_moves.begin(), sorted_moves.end(), [](const Move& a, const Move& b) {
+        std::string sa =
+            a.from.toString() + a.to.toString();
+
+        std::string sb =
+            b.from.toString() + b.to.toString();
+
+        return sa < sb;
+    });
+
+    for (const Move& move : sorted_moves) {
 
         Chess::Board copy = *board;
 
         if (copy.makeMove(move)) {
-
-            copy.changeTurn();
-
             unsigned long nodes = perft(&copy, depth - 1);
-
             total += nodes;
-
-            std::cout << move.from.toString()
-                      << move.to.toString()
-                      << ": " << nodes << "\n";
+            std::cout << move.from.toString() << move.to.toString() << ": " << nodes << "\n";
         }
     }
 

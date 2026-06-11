@@ -178,8 +178,7 @@ void Render::renderMenu(const Window::Section &area, const Menu::Menu *menu, The
 
         ::Color text_color = ::Color({0, 255, 255, 255});
 
-        // TODO(Tejas): This is a disgrace...
-        if (i - 1 == menu->getPtr()) {
+        if ((i - 1) == menu->getPtr()) {
             text_color = ::Color({255, 0, 255, 255});
         }
 

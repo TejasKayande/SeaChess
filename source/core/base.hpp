@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <iostream>
+#include <random>
 
 #define KB(x) ((unsigned long long)(x) * 1024ULL)
 #define MB(x) (KB(x) * 1024ULL)
@@ -48,5 +49,11 @@ namespace Base {
 
         bb &= bb - 1;
         return static_cast<int>(idx);
+    }
+
+    inline u64 randomU64() {
+        static std::mt19937_64 rng(std::random_device{}());
+        return rng();
+
     }
 } // namespace Base

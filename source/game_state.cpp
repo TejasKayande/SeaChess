@@ -99,17 +99,9 @@ GameState::GameState() {
     });
 
     m_current_menu = &m_main_menu;
-
     m_running = true;
 
-    Chess::Square sq(0);
-    std::cout << sq.toString() << std::endl;
-
-    Chess::Square sq2(63);
-    std::cout << sq2.toString() << std::endl;
-
-    Chess::Square sq3(sq.index ^ 5);
-    std::cout << sq3.toString() << std::endl;
+    m_board->setFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 }
 
 GameState::~GameState() {
@@ -119,9 +111,6 @@ GameState::~GameState() {
 }
 
 WindowEvent GameState::update() {
-
-    // TODO(Tejas): Seperate updation for Menu game Game, and perhaps the Status and
-    //              Information sections as well
 
     if (!m_running) return WindowEvent::QUIT;
 
@@ -149,20 +138,13 @@ WindowEvent GameState::update() {
 
     bool move_made = false;
 
-    if (m_board->getTurn() == Chess::Player::DARK) {
+    if (m_board->getTurn() == Chess::Player::DARK && false) {
         Move best_move = Engine::getBestMove(m_board);
         m_board->makeMove(best_move);
         m_move_list.clear();
         m_sel_square = Chess::Square::invalid();
         m_last_move = best_move;
         move_made = true;
-        if (best_move.type == Move::KING_CASTLE || best_move.type == Move::QUEEN_CASTLE) {
-            ::PlaySound(Assets::CASTLE_SOUND);
-        } else if (best_move.type == Move::CAPTURE || best_move.type == Move::PROMO_CAPTURE_KNIGHT || best_move.type == Move::PROMO_CAPTURE_BISHOP || best_move.type == Move::PROMO_CAPTURE_ROOK || best_move.type == Move::PROMO_CAPTURE_QUEEN || best_move.type == Move::EN_PASSANT) {
-            ::PlaySound(Assets::CAPTURE_SOUND);
-        } else {
-            ::PlaySound(Assets::MOVE_SOUND);
-        }
     }
 
     if (::IsMouseButtonPressed(0)) {
@@ -192,15 +174,16 @@ WindowEvent GameState::update() {
                 // TODO(Tejas): This is pretty inefficient, we can optimize
                 //              it by storing the legal moves in a hashset
                 //              or something...
-                for (const Move &move : m_move_list) {
+                for (Move &move : m_move_list) {
+
                     if (move.to == sq) {
+
                         if (m_board->makeMove(move)) {
 
                             switch (move.type) {
                                 case Move::KING_CASTLE:
                                 case Move::QUEEN_CASTLE: {
                                     ::PlaySound(Assets::CASTLE_SOUND);
-                                    
                                 } break;
 
                                 case Move::CAPTURE:

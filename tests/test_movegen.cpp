@@ -20,7 +20,6 @@ unsigned long perftest(Chess::Board *board, int depth) {
     for (const Move &move : move_list) {
         Chess::Board copy = *board;
         if (copy.makeMove(move)) {
-            copy.changeTurn();
             nodes += perftest(&copy, depth - 1);
         }
     }

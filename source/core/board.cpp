@@ -368,7 +368,7 @@ bool Board::makeMove(const Move& m) {
                                 ~(CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE)
                               : ~(CastlingRights::DARK_KING_SIDE  | CastlingRights::DARK_QUEEN_SIDE);
 
-            return true;
+            move_made = true;
 
         } break;
 
@@ -382,7 +382,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(captured_pawn_sq, Piece::nopiece());
 
             move_made = true;
-        }
+        } break;
 
         case MoveType::PROMO_CAPTURE_QUEEN:
         case MoveType::PROMO_QUEEN: {
@@ -390,7 +390,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.to, Piece(PType::QUEEN, moving_piece.color()));
 
             move_made = true;
-        }
+        } break;
 
         case MoveType::PROMO_CAPTURE_ROOK:
         case MoveType::PROMO_ROOK: {
@@ -398,7 +398,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.to, Piece(PType::ROOK, moving_piece.color()));
 
             move_made = true;
-        }
+        } break;
 
         case MoveType::PROMO_CAPTURE_BISHOP:
         case MoveType::PROMO_BISHOP: {
@@ -406,7 +406,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.to, Piece(PType::BISHOP, moving_piece.color()));
 
             move_made = true;
-        }
+        } break;
 
         case MoveType::PROMO_CAPTURE_KNIGHT:
         case MoveType::PROMO_KNIGHT: {
@@ -414,7 +414,7 @@ bool Board::makeMove(const Move& m) {
             setPieceAt(m.to, Piece(PType::KNIGHT, moving_piece.color()));
 
             move_made = true;
-        }
+        } break;
 
         default: {} break;
     }
@@ -473,6 +473,8 @@ bool Board::unMakeMove(const Move& m) {
     default: {} break;
 
     }
+
+    if (move_unmade) changeTurn();
 
     return move_unmade;
 }

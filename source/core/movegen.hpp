@@ -9,13 +9,18 @@
 
 namespace MoveGen {
 
+    enum PromotionType {
+        TO_QUEEN = 0,
+        TO_KNIGHT,
+        TO_BISHOP,
+        TO_ROOK,
+    };
+
     void init();
 
     namespace Attack {
 
         // TODO(Tejas): we can have a function that returns if a square is attacked.
-
-        void initAttackTables();
 
         BitBoard getAllAttacks(Chess::Board board, Chess::Player player);
 

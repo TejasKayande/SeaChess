@@ -35,6 +35,7 @@ namespace {
         return sq_idx ^ 56;
     }
 
+    // TODO(Tejas): Change this to negamax, maybe.. do research on this.
     int minmax(Chess::Board *board, int depth, int alpha, int beta) {
 
         if (depth == 0) return Engine::evaluate(board);

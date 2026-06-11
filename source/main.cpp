@@ -35,7 +35,9 @@ bool runPerftest() {
     using namespace PerfTest;
 
     Chess::Board* board = new Chess::Board();
-    board->setFen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq -");
+    board->setFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+
+    // board->setFen("r3k2r/p2pqpb1/bnp1pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/2KR3R b kq -");
     
     int depth = 4;
     PerfTest::runPerftest(board, depth);
@@ -99,9 +101,54 @@ auto main(void) -> int {
     ::CloseWindow();
     return 0;
 }
-
-// SEEMS LIKE THE ENGINE IS GENERATION RIGHT AMOUNT OF MOVES...
-// I THOUGHT THIS WAS GOING TO TAKE A LONG TIME...
-// WE DID IT LIKE IN 28 mins. THATS GOOD>
-
-// BRB...
+// a1a2: 44  b2b3: 43
+// a1b1: 44  g2g3: 43
+// a1c1: 44  a3a4: 43
+// a1d1: 44  d5d6: 40
+// a3a4: 43  g2g4: 43
+// a3b4: 42  g2h3: 44
+// b2b3: 43  a3b4: 42
+// c3a2: 43  d5e6: 46
+// c3a4: 43  d5c6: 43
+// c3b1: 43  c3b1: 43
+// c3b5: 41  c3d1: 43
+// c3d1: 43  c3a2: 43
+// d2c1: 44  c3a4: 43
+// d2e3: 44  c3b5: 41
+// d2f4: 44  e5d3: 44
+// d2g5: 43  e5c4: 43
+// d2h6: 42  e5g4: 45
+// d5c6: 43  e5c6: 42
+// d5d6: 40  e5g6: 43
+// d5e6: 46  e5d7: 46
+// e1c1: 46  e5f7: 45
+// e1d1: 44  d2c1: 44
+// e1f1: 44  d2e3: 44
+// e1g1: 44  d2f4: 44
+// e2a6: 37  d2g5: 43
+// e2b5: 42  d2h6: 42
+// e2c4: 42  e2d1: 45
+// e2d1: 45  e2f1: 45
+// e2d3: 43  e2d3: 43
+// e2f1: 45  e2c4: 42
+// e5c4: 43  e2b5: 42
+// e5c6: 42  e2a6: 37
+// e5d3: 44  a1b1: 44
+// e5d7: 46  a1c1: 44
+// e5f7: 45  a1d1: 44
+// e5g4: 45  a1a2: 44
+// e5g6: 43  h1f1: 44
+// f3d3: 43  h1g1: 44
+// f3e3: 44  f3d3: 43
+// f3f4: 44  f3e3: 44
+// f3f5: 46  f3g3: 44
+// f3f6: 40  f3h3: 44
+// f3g3: 44  f3f4: 44
+// f3g4: 44  f3g4: 44
+// f3h3: 44  f3f5: 46
+// f3h5: 44  f3h5: 44
+// g2g3: 43  f3f6: 40
+// g2g4: 43  e1d1: 44
+// g2h3: 44  e1f1: 44
+// h1f1: 44  e1g1: 44
+// h1g1: 44  e1c1: 44

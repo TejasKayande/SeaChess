@@ -1,6 +1,8 @@
 
 #include "movegen.hpp"
 
+#include <bitset>
+#include <bit>
 using namespace MoveGen;
 
 // TODO(Tejas):
@@ -13,9 +15,187 @@ using namespace MoveGen;
 
 namespace {
 
+    BitBoard ROOK_MASKS[64];
+    int      ROOK_RELEVANT_BITS[64];
+    BitBoard ROOK_OCCUPANCY_VARIATIONS[64][4096]; // 4096 = 2^12, since the max number of relevent bits for a rook is 12.
+    BitBoard ROOK_ATTACKS[64][4096];
+    u64      ROOK_MAGICS[64];
+    int      ROOK_SHIFTS[64];
+    BitBoard ROOK_MAGIC_ATTACKS[64][4096];
+
     BitBoard PAWN_ATTACKS[Chess::COLOR_COUNT][64];
     BitBoard KNIGHT_ATTACKS[64];
     BitBoard KING_ATTACKS[64];
+
+    void initAttackTables() {
+
+        for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
+
+            Chess::Square sq(sq_idx);
+
+            int rank = sq.rank();
+            int file = sq.file();
+
+            // NOTE(Tejas): Knight Attacks
+            {
+                BitBoard mask = 0ULL;
+
+                const int dr[8] = { +2, +2, +1, +1, -1, -1, -2, -2 };
+                const int df[8] = { +1, -1, +2, -2, +2, -2, +1, -1 };
+
+                for (int i = 0; i < 8; i++) {
+
+                    int nr = rank + dr[i];
+                    int nf = file + df[i];
+
+                    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+                        int idx = Chess::Square(nr, nf).toIndex();
+                        mask |= (1ULL << idx);
+                    }
+                }
+
+                KNIGHT_ATTACKS[sq_idx] = mask;
+            }
+
+            // NOTE(Tejas): King Attaks
+            {
+                BitBoard mask = 0ULL;
+
+                const int dr[8] = { +1, +1, +1,  0,  0, -1, -1, -1 };
+                const int df[8] = { +1,  0, -1, +1, -1, +1,  0, -1 };
+
+                for (int i = 0; i < 8; i++) {
+
+                    int nr = rank + dr[i];
+                    int nf = file + df[i];
+
+                    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+                        int idx = Chess::Square(nr, nf).toIndex();
+                        mask |= (1ULL << idx);
+                    }
+                }
+
+                KING_ATTACKS[sq_idx] = mask;
+            }
+
+            // NOTE(Tejas): Light Pawn Attacks
+            {
+                BitBoard mask = 0;
+
+                int nr = rank + 1;
+
+                if (nr < 8) {
+
+                    if (file - 1 >= 0) {
+                        int idx = Chess::Square(nr, file - 1).toIndex();
+                        mask |= (1ULL << idx);
+                    }
+
+                    if (file + 1 < Chess::MAX_FILE) {
+                        int idx = Chess::Square(nr, file + 1).toIndex();
+                        mask |= (1ULL << idx);
+                    }
+                }
+
+                PAWN_ATTACKS[Chess::Player::LIGHT][sq_idx] = mask;
+            }
+
+            // NOTE(Tejas): Dark Pawn Attacks
+            {
+                BitBoard mask = 0;
+
+                int nr = rank - 1;
+
+                if (nr >= 0) {
+
+                    if (file - 1 >= 0) {
+                        int idx = Chess::Square(nr, file - 1).toIndex();
+                        mask |= (1ULL << idx);
+                    }
+
+                    if (file + 1 < 8) {
+                        int idx = Chess::Square(nr, file + 1).toIndex();
+                        mask |= (1ULL << idx);
+                    }
+                }
+
+                PAWN_ATTACKS[Chess::Player::DARK][sq_idx] = mask;
+            }
+        }
+    }
+
+    BitBoard rookAttacksSlow(Chess::Square sq, BitBoard occ) {
+
+        // NOTE(Tejas): This is to compute the Magic BitBoard attack tables.
+
+        BitBoard attacks = 0;
+
+        int rank = sq.rank();
+        int file = sq.file();
+
+        // NOTE(Tejas): Up
+        for (int nr = rank + 1; nr < 8; nr++) {
+            int idx = Chess::Square(nr, file).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        // NOTE(Tejas): Down
+        for (int nr = rank - 1; nr >= 0; nr--) {
+            int idx = Chess::Square(nr, file).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        // NOTE(Tejas): Right
+        for (int nf = file + 1; nf < 8; nf++) {
+            int idx = Chess::Square(rank, nf).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        // NOTE(Tejas): Left
+        for (int nf = file - 1; nf >= 0; nf--) {
+            int idx = Chess::Square(rank, nf).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        return attacks;
+    }
+
+    BitBoard generateRookMask(u8 sq_idx) {
+
+        BitBoard mask = 0; 
+        Chess::Square sq(sq_idx);
+
+        // NOTE(Tejas): We ignore the edge squares since they don't have any blockers
+        for (int rank = sq.rank() + 1; rank < 7; rank++) {
+            int idx = Chess::Square(rank, sq.file()).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        for (int rank = sq.rank() - 1; rank >= 1; rank--) {
+            int idx = Chess::Square(rank, sq.file()).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        for (int file = sq.file() + 1; file < 7; file++) {
+            int idx = Chess::Square(sq.rank(), file).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        for (int file = sq.file() - 1; file >= 1; file--) {
+            int idx = Chess::Square(sq.rank(), file).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        return mask;
+    }
 
     void generateCastlingMoves(const Chess::Board *board, Chess::Player player, MoveList &move_list) {
 
@@ -109,7 +289,6 @@ namespace {
                                     Chess::Square to, bool capture = false, 
                                     Chess::Piece captured_piece = Chess::Piece::nopiece()) 
     {
-
         if (capture)  {
             move_list.push_back(Move(from, to, Move::PROMO_CAPTURE_QUEEN , captured_piece));
             move_list.push_back(Move(from, to, Move::PROMO_CAPTURE_ROOK  , captured_piece));
@@ -123,11 +302,130 @@ namespace {
         }
     }
 
+    void buildRookMasks() {
+        for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
+            ROOK_MASKS[sq_idx] = generateRookMask(sq_idx);
+            ROOK_RELEVANT_BITS[sq_idx] = std::popcount(ROOK_MASKS[sq_idx]);
+        }
+    }
+
+    BitBoard occupancyFromIndex(int index, int bits, BitBoard mask) {
+
+        // NOTE(Tejas): index: the index of the occupancy variation we want to generate.
+        //              bits: the number of relevant bits, we get this from ROOK_RELEVANT_BITS.
+        //              mask: the ROOK_MASKS for the square.
+
+        BitBoard occupancy = 0;
+
+        for (int i = 0; i < bits; i++) {
+
+            int sq_idx = Base::popLSB(mask);
+            if (index & (1 << i)) occupancy |= (1ULL << sq_idx);
+        }
+
+        return occupancy;
+    }
+
+    int rookMagicIndex(int sq_idx, BitBoard occ) {
+        occ &= ROOK_MASKS[sq_idx];
+        return int((occ * ROOK_MAGICS[sq_idx]) >> ROOK_SHIFTS[sq_idx]);
+    }
+
+    u64 randomMagicCandidate() {
+        return Base::randomU64()
+             & Base::randomU64()
+             & Base::randomU64();
+    }
+
+    bool testRookMagic(int sq, u64 magic) {
+
+        int bits = ROOK_RELEVANT_BITS[sq];
+        int count = 1 << bits;
+
+        static BitBoard used[4096];
+
+        std::fill(std::begin(used), std::end(used), 0ULL);
+
+        for (int i = 0; i < count; i++) {
+
+            BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][i];
+
+            BitBoard attack = ROOK_ATTACKS[sq][i];
+
+            u64 index = ((occ * magic) >> ROOK_SHIFTS[sq]);
+
+            if (used[index] == 0) {
+                used[index] = attack;
+            } else if (used[index] != attack) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    u64 findRookMagic(int sq) {
+        while (true) {
+            u64 magic = randomMagicCandidate();
+            if (testRookMagic(sq, magic)) return magic;
+        }
+    }
+
+    void generateRookMagicBitBoards() {
+
+        // Phase 1: masks + shifts
+        buildRookMasks();
+
+        for (int sq = 0; sq < 64; sq++) ROOK_SHIFTS[sq] = 64 - ROOK_RELEVANT_BITS[sq];
+
+        // Phase 2: occupancy variations
+        for (int sq = 0; sq < 64; sq++) {
+
+            int bits = ROOK_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx] = occupancyFromIndex(occ_idx, bits,ROOK_MASKS[sq]);
+            }
+        }
+
+        // Phase 3: reference attack table
+        for (int sq = 0; sq < 64; sq++) {
+
+            int bits = ROOK_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx];
+                ROOK_ATTACKS[sq][occ_idx] = rookAttacksSlow(Chess::Square(sq), occ);
+            }
+        }
+
+        // Phase 4: find magics
+        for (int sq = 0; sq < 64; sq++) ROOK_MAGICS[sq] = findRookMagic(sq);
+
+        // Phase 5: build magic lookup table
+        std::fill(&ROOK_MAGIC_ATTACKS[0][0], &ROOK_MAGIC_ATTACKS[0][0] + 64 * 4096, 0ULL);
+
+        for (int sq = 0; sq < 64; sq++) {
+
+            int bits = ROOK_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx];
+                u64 magic_idx = rookMagicIndex(sq, occ);
+                ROOK_MAGIC_ATTACKS[sq][magic_idx] = ROOK_ATTACKS[sq][occ_idx];
+            }
+        }
+    }
+
 } // Anonymous namespace
 
 void MoveGen::init() {
 
-    Attack::initAttackTables();
+    initAttackTables();
+    generateRookMagicBitBoards();
 }
 
 BitBoard Attack::getAllAttacks(Chess::Board board, Chess::Player player) {
@@ -154,103 +452,6 @@ BitBoard Attack::getAllAttacks(Chess::Board board, Chess::Player player) {
     }
 
     return attacks;
-}
-
-void Attack::initAttackTables() {
-
-    for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
-
-        Chess::Square sq(sq_idx);
-
-        int rank = sq.rank();
-        int file = sq.file();
-
-        // NOTE(Tejas): Knight Attacks
-        {
-            BitBoard mask = 0ULL;
-
-            const int dr[8] = { +2, +2, +1, +1, -1, -1, -2, -2 };
-            const int df[8] = { +1, -1, +2, -2, +2, -2, +1, -1 };
-
-            for (int i = 0; i < 8; i++) {
-
-                int nr = rank + dr[i];
-                int nf = file + df[i];
-
-                if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-                    int idx = Chess::Square(nr, nf).toIndex();
-                    mask |= (1ULL << idx);
-                }
-            }
-
-            KNIGHT_ATTACKS[sq_idx] = mask;
-        }
-
-        // NOTE(Tejas): King Attaks
-        {
-            BitBoard mask = 0ULL;
-
-            const int dr[8] = { +1, +1, +1,  0,  0, -1, -1, -1 };
-            const int df[8] = { +1,  0, -1, +1, -1, +1,  0, -1 };
-
-            for (int i = 0; i < 8; i++) {
-
-                int nr = rank + dr[i];
-                int nf = file + df[i];
-
-                if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-                    int idx = Chess::Square(nr, nf).toIndex();
-                    mask |= (1ULL << idx);
-                }
-            }
-
-            KING_ATTACKS[sq_idx] = mask;
-        }
-
-        // NOTE(Tejas): Light Pawn Attacks
-        {
-            BitBoard mask = 0;
-
-            int nr = rank + 1;
-
-            if (nr < 8) {
-
-                if (file - 1 >= 0) {
-                    int idx = Chess::Square(nr, file - 1).toIndex();
-                    mask |= (1ULL << idx);
-                }
-
-                if (file + 1 < Chess::MAX_FILE) {
-                    int idx = Chess::Square(nr, file + 1).toIndex();
-                    mask |= (1ULL << idx);
-                }
-            }
-
-            PAWN_ATTACKS[Chess::Player::LIGHT][sq_idx] = mask;
-        }
-
-        // NOTE(Tejas): Dark Pawn Attacks
-        {
-            BitBoard mask = 0;
-
-            int nr = rank - 1;
-
-            if (nr >= 0) {
-
-                if (file - 1 >= 0) {
-                    int idx = Chess::Square(nr, file - 1).toIndex();
-                    mask |= (1ULL << idx);
-                }
-
-                if (file + 1 < 8) {
-                    int idx = Chess::Square(nr, file + 1).toIndex();
-                    mask |= (1ULL << idx);
-                }
-            }
-
-            PAWN_ATTACKS[Chess::Player::DARK][sq_idx] = mask;
-        }
-    }
 }
 
 BitBoard Attack::pawnAttacks(Chess::Square sq, Chess::Player p) {
@@ -307,44 +508,8 @@ BitBoard Attack::bishopAttacks(Chess::Square sq, BitBoard occ) {
 
 BitBoard Attack::rookAttacks(Chess::Square sq, BitBoard occ) {
 
-    BitBoard attacks = 0;
-
-    int rank = sq.rank();
-    int file = sq.file();
-
-    // NOTE(Tejas): Up
-    for (int nr = rank + 1; nr < 8; nr++) {
-        int idx = Chess::Square(nr, file).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    // NOTE(Tejas): Down
-    for (int nr = rank - 1; nr >= 0; nr--) {
-        int idx = Chess::Square(nr, file).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    // NOTE(Tejas): Right
-    for (int nf = file + 1; nf < 8; nf++) {
-        int idx = Chess::Square(rank, nf).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    // NOTE(Tejas): Left
-    for (int nf = file - 1; nf >= 0; nf--) {
-        int idx = Chess::Square(rank, nf).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    return attacks;
+    u64 idx = rookMagicIndex(sq.index, occ);
+    return ROOK_MAGIC_ATTACKS[sq.index][idx];
 }
 
 BitBoard Attack::queenAttacks(Chess::Square sq, BitBoard occ) {
