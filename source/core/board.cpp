@@ -434,27 +434,88 @@ bool Board::unMakeMove(const Move& m) {
 
     switch (m.type) {
 
-    case MoveType::QUIET:
-         
-    case MoveType::DOUBLE_PAWN_PUSH:
-         
-    case MoveType::EN_PASSANT:
-         
+    case MoveType::QUIET: 
+    case MoveType::DOUBLE_PAWN_PUSH: {
+
+        setPieceAt(m.to, Piece::nopiece());
+        setPieceAt(m.from, moving_piece);
+
+        move_unmade = true;
+
+    } break;
+
     case MoveType::PROMO_KNIGHT:
     case MoveType::PROMO_BISHOP:
     case MoveType::PROMO_ROOK:
-    case MoveType::PROMO_QUEEN:
-         
-    case MoveType::PROMO_CAPTURE_KNIGHT:
-    case MoveType::PROMO_CAPTURE_BISHOP:
-    case MoveType::PROMO_CAPTURE_ROOK:
-    case MoveType::PROMO_CAPTURE_QUEEN:
+    case MoveType::PROMO_QUEEN: {
 
-    case MoveType::KING_CASTLE:
+        setPieceAt(m.to, Piece::nopiece());
+        setPieceAt(m.from, Chess::Piece(PType::PAWN, moving_piece.color()));
+
+        move_unmade = true;
+    } break;
+         
+    case MoveType::EN_PASSANT: {
+
+        setPieceAt(m.to, Piece::nopiece());
+        setPieceAt(m.from, moving_piece);
+
+        int dir = (moving_piece.color() == PColor::LIGHT) ? -8 : +8;
+        Square captured_pawn_sq(m.to.toIndex() + dir);
+        setPieceAt(captured_pawn_sq, Piece(PType::PAWN, (moving_piece.color() == PColor::LIGHT) ? PColor::DARK : PColor::LIGHT));
+
+        move_unmade = true;
+    } break;
+
+    case MoveType::KING_CASTLE: {
+
+        setPieceAt(m.to, Piece::nopiece());
+        setPieceAt(m.from, moving_piece);
+
+        if (m.to == Square(0, 1)) {
+            setPieceAt(Square(0, 0), Piece(PType::ROOK, PColor::LIGHT));
+            setPieceAt(Square(0, 2), Piece::nopiece());
+
+            _castling_rights |= CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE;
+        }
+
+        if (m.to == Square(7, 1)) {
+            setPieceAt(Square(7, 0), Piece(PType::ROOK, PColor::DARK));
+            setPieceAt(Square(7, 2), Piece::nopiece());
+
+            _castling_rights |= CastlingRights::DARK_KING_SIDE | CastlingRights::DARK_QUEEN_SIDE;
+        }
+
+        move_unmade = true;
+
+    } break;
+
     case MoveType::QUEEN_CASTLE: {
 
         setPieceAt(m.to, Piece::nopiece());
         setPieceAt(m.from, moving_piece);
+
+        if (m.to == Square(0, 5)) {
+            setPieceAt(Square(0, 7), Piece(PType::ROOK, PColor::LIGHT));
+            setPieceAt(Square(0, 4), Piece::nopiece());
+        } 
+
+        if (m.to == Square(7, 5)) {
+            setPieceAt(Square(7, 7), Piece(PType::ROOK, PColor::DARK));
+            setPieceAt(Square(7, 4), Piece::nopiece());
+         }
+
+        move_unmade = true;
+
+    } break;
+         
+    case MoveType::PROMO_CAPTURE_KNIGHT:
+    case MoveType::PROMO_CAPTURE_BISHOP:
+    case MoveType::PROMO_CAPTURE_ROOK:
+    case MoveType::PROMO_CAPTURE_QUEEN: {
+
+        setPieceAt(m.to, m.captured_piece);
+        setPieceAt(m.from, Chess::Piece(PType::PAWN, moving_piece.color()));
 
         move_unmade = true;
 
@@ -475,7 +536,6 @@ bool Board::unMakeMove(const Move& m) {
     }
 
     if (move_unmade) changeTurn();
-
     return move_unmade;
 }
 

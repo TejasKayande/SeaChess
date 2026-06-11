@@ -6,12 +6,11 @@
 using namespace MoveGen;
 
 // TODO(Tejas):
-// - [ ] For all forward pawn moves, we label them as QUIET moves. They could be
-//       promotions. Same with captures.
 // - [ ] Since all of the move generation functions have a similar structure, we
 //       can probably abstract out the common code 
-// - [ ] Add lookup tables for sliding pieces as well: magic bitboards or
-//       PEXT/BMI2 indexed lookup tables.
+// - [ ] Study about PEXT/BMI2 based move generation for sliding pieces.
+
+// - [ ] Fix the claustro-fuck of the Rook and Bishop magic mask generation
 
 namespace {
 
@@ -23,9 +22,23 @@ namespace {
     int      ROOK_SHIFTS[64];
     BitBoard ROOK_MAGIC_ATTACKS[64][4096];
 
+    BitBoard BISHOP_MASKS[64];
+    int      BISHOP_RELEVANT_BITS[64];
+    BitBoard BISHOP_OCCUPANCY_VARIATIONS[64][512]; // 2^9 max
+    BitBoard BISHOP_ATTACKS[64][512];
+    u64      BISHOP_MAGICS[64];
+    int      BISHOP_SHIFTS[64];
+    BitBoard BISHOP_MAGIC_ATTACKS[64][512];
+
     BitBoard PAWN_ATTACKS[Chess::COLOR_COUNT][64];
     BitBoard KNIGHT_ATTACKS[64];
     BitBoard KING_ATTACKS[64];
+
+    u64 randomMagicCandidate() {
+        return Base::randomU64()
+             & Base::randomU64()
+             & Base::randomU64();
+    }
 
     void initAttackTables() {
 
@@ -124,6 +137,65 @@ namespace {
         }
     }
 
+    BitBoard occupancyFromIndex(int index, int bits, BitBoard mask) {
+
+        // NOTE(Tejas): index: the index of the occupancy variation we want to generate.
+        //              bits: the number of relevant bits, we get this from ROOK_RELEVANT_BITS.
+        //              mask: the ROOK_MASKS for the square.
+
+        BitBoard occupancy = 0;
+
+        for (int i = 0; i < bits; i++) {
+
+            int sq_idx = Base::popLSB(mask);
+            if (index & (1 << i)) occupancy |= (1ULL << sq_idx);
+        }
+
+        return occupancy;
+    }
+
+    BitBoard bishopAttacksSlow(Chess::Square sq, BitBoard occ) {
+
+        BitBoard attacks = 0;
+
+        int rank = sq.rank();
+        int file = sq.file();
+
+        // NOTE(Tejas): Right-Up Diagonal
+        for (int nr = rank + 1, nf = file + 1; nr < 8 && nf < 8; nr++, nf++) {
+            int idx = Chess::Square(nr, nf).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        // NOTE(Tejas): Left-Up Diagonal
+        for (int nr = rank + 1, nf = file - 1; nr < 8 && nf >= 0; nr++, nf--) {
+            int idx = Chess::Square(nr, nf).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        // Note(Tejas): Right-Down Diagonal
+        for (int nr = rank - 1, nf = file + 1; nr >= 0 && nf < 8; nr--, nf++) {
+            int idx = Chess::Square(nr, nf).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        // Note(Tejas): Left-Down Diagonal
+        for (int nr = rank - 1, nf = file - 1; nr >= 0 && nf >= 0; nr--, nf--) {
+            int idx = Chess::Square(nr, nf).toIndex();
+            attacks |= (1ULL << idx);
+
+            if (occ & (1ULL << idx)) break;
+        }
+
+        return attacks;
+    }
+
     BitBoard rookAttacksSlow(Chess::Square sq, BitBoard occ) {
 
         // NOTE(Tejas): This is to compute the Magic BitBoard attack tables.
@@ -168,6 +240,34 @@ namespace {
         return attacks;
     }
 
+    BitBoard generateBishopMask(u8 sq_idx) {
+
+        BitBoard mask = 0; 
+        Chess::Square sq(sq_idx);
+
+        for (int dr = 1; sq.rank() + dr < 7 && sq.file() + dr < 7; dr++) {
+            int idx = Chess::Square(sq.rank() + dr, sq.file() + dr).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        for (int dr = 1; sq.rank() + dr < 7 && sq.file() - dr >= 1; dr++) {
+            int idx = Chess::Square(sq.rank() + dr, sq.file() - dr).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        for (int dr = 1; sq.rank() - dr >= 1 && sq.file() + dr < 7; dr++) {
+            int idx = Chess::Square(sq.rank() - dr, sq.file() + dr).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        for (int dr = 1; sq.rank() - dr >= 1 && sq.file() - dr >= 1; dr++) {
+            int idx = Chess::Square(sq.rank() - dr, sq.file() - dr).toIndex();
+            mask |= (1ULL << idx);
+        }
+
+        return mask;
+    }
+
     BitBoard generateRookMask(u8 sq_idx) {
 
         BitBoard mask = 0; 
@@ -195,6 +295,178 @@ namespace {
         }
 
         return mask;
+    }
+
+    int bishopMagicIndex(int sq_idx, BitBoard occ) {
+        occ &= BISHOP_MASKS[sq_idx];
+        return int((occ * BISHOP_MAGICS[sq_idx]) >> BISHOP_SHIFTS[sq_idx]);
+    }
+
+    int rookMagicIndex(int sq_idx, BitBoard occ) {
+        occ &= ROOK_MASKS[sq_idx];
+        return int((occ * ROOK_MAGICS[sq_idx]) >> ROOK_SHIFTS[sq_idx]);
+    }
+
+    bool testBishopMagic(int sq_idx, u64 magic) {
+
+        int count = 1 << BISHOP_RELEVANT_BITS[sq_idx];
+
+        static BitBoard used[512];
+
+        std::fill(std::begin(used), std::end(used), 0ULL);
+
+        for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+
+            BitBoard occ = BISHOP_OCCUPANCY_VARIATIONS[sq_idx][occ_idx];
+
+            BitBoard attacks = BISHOP_ATTACKS[sq_idx][occ_idx];
+
+            u64 index = (occ * magic) >> BISHOP_SHIFTS[sq_idx];
+
+            if (used[index] == 0ULL) used[index] = attacks;
+            else if (used[index] != attacks) return false;
+        }
+
+        return true;
+    }
+
+    bool testRookMagic(int sq_idx, u64 magic) {
+
+        int count = 1 << ROOK_RELEVANT_BITS[sq_idx];
+
+        static BitBoard used[4096];
+
+        std::fill(std::begin(used), std::end(used), 0ULL);
+
+        for (int i = 0; i < count; i++) {
+
+            BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq_idx][i];
+
+            BitBoard attack = ROOK_ATTACKS[sq_idx][i];
+
+            u64 index = ((occ * magic) >> ROOK_SHIFTS[sq_idx]);
+
+            if (used[index] == 0) used[index] = attack;
+            else if (used[index] != attack) return false;
+        }
+
+        return true;
+    }
+
+    u64 findBishopMagic(int sq_idx) {
+
+        while (true) {
+            u64 magic = randomMagicCandidate();
+            if (testBishopMagic(sq_idx, magic)) return magic;
+        }
+    }
+
+    u64 findRookMagic(int sq_idx) {
+        while (true) {
+            u64 magic = randomMagicCandidate();
+            if (testRookMagic(sq_idx, magic)) return magic;
+        }
+    }
+
+    void generateBishopMagicBitBoards() {
+
+        // Phase 1: masks + shifts
+        for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
+            BISHOP_MASKS[sq_idx] = generateBishopMask(sq_idx);
+            BISHOP_RELEVANT_BITS[sq_idx] = std::popcount(BISHOP_MASKS[sq_idx]);
+            BISHOP_SHIFTS[sq_idx] = 64 - BISHOP_RELEVANT_BITS[sq_idx];
+        }
+
+        // Phase 2: occupancy variations
+        for (int sq = 0; sq < 64; sq++) {
+        
+            int bits  = BISHOP_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+        
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                BISHOP_OCCUPANCY_VARIATIONS[sq][occ_idx] = occupancyFromIndex(occ_idx, bits, BISHOP_MASKS[sq]);
+            }
+        }
+
+        // Phase 3: reference attack table
+        for (int sq = 0; sq < 64; sq++) {
+        
+            int bits = BISHOP_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+        
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+            
+                BitBoard occ = BISHOP_OCCUPANCY_VARIATIONS[sq][occ_idx];
+                BISHOP_ATTACKS[sq][occ_idx] = bishopAttacksSlow(Chess::Square(sq), occ);
+            }
+        }
+
+        // Phase 4: find magics
+        for (int sq = 0; sq < 64; sq++) BISHOP_MAGICS[sq] = findBishopMagic(sq);
+
+        // Phase 5: build magic lookup table
+        for (int sq = 0; sq < 64; sq++) {
+
+            int bits  = BISHOP_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                BitBoard occ = BISHOP_OCCUPANCY_VARIATIONS[sq][occ_idx];
+                u64 magic_idx = bishopMagicIndex(sq, occ);
+                BISHOP_MAGIC_ATTACKS[sq][magic_idx] = BISHOP_ATTACKS[sq][occ_idx];
+            }
+        }
+    }
+
+    void generateRookMagicBitBoards() {
+
+        // Phase 1: masks + shifts
+        for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
+            ROOK_MASKS[sq_idx] = generateRookMask(sq_idx);
+            ROOK_RELEVANT_BITS[sq_idx] = std::popcount(ROOK_MASKS[sq_idx]);
+            ROOK_SHIFTS[sq_idx] = 64 - ROOK_RELEVANT_BITS[sq_idx];
+        }
+
+        // Phase 2: occupancy variations
+        for (int sq = 0; sq < 64; sq++) {
+
+            int bits = ROOK_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx] = occupancyFromIndex(occ_idx, bits,ROOK_MASKS[sq]);
+            }
+        }
+
+        // Phase 3: reference attack table
+        for (int sq = 0; sq < 64; sq++) {
+
+            int bits = ROOK_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx];
+                ROOK_ATTACKS[sq][occ_idx] = rookAttacksSlow(Chess::Square(sq), occ);
+            }
+        }
+
+        // Phase 4: find magics
+        for (int sq = 0; sq < 64; sq++) ROOK_MAGICS[sq] = findRookMagic(sq);
+
+        // Phase 5: build magic lookup table
+        std::fill(&ROOK_MAGIC_ATTACKS[0][0], &ROOK_MAGIC_ATTACKS[0][0] + 64 * 4096, 0ULL);
+
+        for (int sq = 0; sq < 64; sq++) {
+
+            int bits = ROOK_RELEVANT_BITS[sq];
+            int count = 1 << bits;
+
+            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
+                BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx];
+                u64 magic_idx = rookMagicIndex(sq, occ);
+                ROOK_MAGIC_ATTACKS[sq][magic_idx] = ROOK_ATTACKS[sq][occ_idx];
+            }
+        }
     }
 
     void generateCastlingMoves(const Chess::Board *board, Chess::Player player, MoveList &move_list) {
@@ -302,130 +574,13 @@ namespace {
         }
     }
 
-    void buildRookMasks() {
-        for (int sq_idx = 0; sq_idx < 64; sq_idx++) {
-            ROOK_MASKS[sq_idx] = generateRookMask(sq_idx);
-            ROOK_RELEVANT_BITS[sq_idx] = std::popcount(ROOK_MASKS[sq_idx]);
-        }
-    }
-
-    BitBoard occupancyFromIndex(int index, int bits, BitBoard mask) {
-
-        // NOTE(Tejas): index: the index of the occupancy variation we want to generate.
-        //              bits: the number of relevant bits, we get this from ROOK_RELEVANT_BITS.
-        //              mask: the ROOK_MASKS for the square.
-
-        BitBoard occupancy = 0;
-
-        for (int i = 0; i < bits; i++) {
-
-            int sq_idx = Base::popLSB(mask);
-            if (index & (1 << i)) occupancy |= (1ULL << sq_idx);
-        }
-
-        return occupancy;
-    }
-
-    int rookMagicIndex(int sq_idx, BitBoard occ) {
-        occ &= ROOK_MASKS[sq_idx];
-        return int((occ * ROOK_MAGICS[sq_idx]) >> ROOK_SHIFTS[sq_idx]);
-    }
-
-    u64 randomMagicCandidate() {
-        return Base::randomU64()
-             & Base::randomU64()
-             & Base::randomU64();
-    }
-
-    bool testRookMagic(int sq, u64 magic) {
-
-        int bits = ROOK_RELEVANT_BITS[sq];
-        int count = 1 << bits;
-
-        static BitBoard used[4096];
-
-        std::fill(std::begin(used), std::end(used), 0ULL);
-
-        for (int i = 0; i < count; i++) {
-
-            BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][i];
-
-            BitBoard attack = ROOK_ATTACKS[sq][i];
-
-            u64 index = ((occ * magic) >> ROOK_SHIFTS[sq]);
-
-            if (used[index] == 0) {
-                used[index] = attack;
-            } else if (used[index] != attack) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    u64 findRookMagic(int sq) {
-        while (true) {
-            u64 magic = randomMagicCandidate();
-            if (testRookMagic(sq, magic)) return magic;
-        }
-    }
-
-    void generateRookMagicBitBoards() {
-
-        // Phase 1: masks + shifts
-        buildRookMasks();
-
-        for (int sq = 0; sq < 64; sq++) ROOK_SHIFTS[sq] = 64 - ROOK_RELEVANT_BITS[sq];
-
-        // Phase 2: occupancy variations
-        for (int sq = 0; sq < 64; sq++) {
-
-            int bits = ROOK_RELEVANT_BITS[sq];
-            int count = 1 << bits;
-
-            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
-                ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx] = occupancyFromIndex(occ_idx, bits,ROOK_MASKS[sq]);
-            }
-        }
-
-        // Phase 3: reference attack table
-        for (int sq = 0; sq < 64; sq++) {
-
-            int bits = ROOK_RELEVANT_BITS[sq];
-            int count = 1 << bits;
-
-            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
-                BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx];
-                ROOK_ATTACKS[sq][occ_idx] = rookAttacksSlow(Chess::Square(sq), occ);
-            }
-        }
-
-        // Phase 4: find magics
-        for (int sq = 0; sq < 64; sq++) ROOK_MAGICS[sq] = findRookMagic(sq);
-
-        // Phase 5: build magic lookup table
-        std::fill(&ROOK_MAGIC_ATTACKS[0][0], &ROOK_MAGIC_ATTACKS[0][0] + 64 * 4096, 0ULL);
-
-        for (int sq = 0; sq < 64; sq++) {
-
-            int bits = ROOK_RELEVANT_BITS[sq];
-            int count = 1 << bits;
-
-            for (int occ_idx = 0; occ_idx < count; occ_idx++) {
-                BitBoard occ = ROOK_OCCUPANCY_VARIATIONS[sq][occ_idx];
-                u64 magic_idx = rookMagicIndex(sq, occ);
-                ROOK_MAGIC_ATTACKS[sq][magic_idx] = ROOK_ATTACKS[sq][occ_idx];
-            }
-        }
-    }
-
 } // Anonymous namespace
 
 void MoveGen::init() {
 
     initAttackTables();
     generateRookMagicBitBoards();
+    generateBishopMagicBitBoards();
 }
 
 BitBoard Attack::getAllAttacks(Chess::Board board, Chess::Player player) {
@@ -466,44 +621,8 @@ BitBoard Attack::knightAttacks(Chess::Square sq) {
 
 BitBoard Attack::bishopAttacks(Chess::Square sq, BitBoard occ) {
 
-    BitBoard attacks = 0;
-
-    int rank = sq.rank();
-    int file = sq.file();
-
-    // NOTE(Tejas): Right-Up Diagonal
-    for (int nr = rank + 1, nf = file + 1; nr < 8 && nf < 8; nr++, nf++) {
-        int idx = Chess::Square(nr, nf).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    // NOTE(Tejas): Left-Up Diagonal
-    for (int nr = rank + 1, nf = file - 1; nr < 8 && nf >= 0; nr++, nf--) {
-        int idx = Chess::Square(nr, nf).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    // Note(Tejas): Right-Down Diagonal
-    for (int nr = rank - 1, nf = file + 1; nr >= 0 && nf < 8; nr--, nf++) {
-        int idx = Chess::Square(nr, nf).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    // Note(Tejas): Left-Down Diagonal
-    for (int nr = rank - 1, nf = file - 1; nr >= 0 && nf >= 0; nr--, nf--) {
-        int idx = Chess::Square(nr, nf).toIndex();
-        attacks |= (1ULL << idx);
-
-        if (occ & (1ULL << idx)) break;
-    }
-
-    return attacks;
+    u64 idx = bishopMagicIndex(sq.index, occ);
+    return BISHOP_MAGIC_ATTACKS[sq.index][idx];
 }
 
 BitBoard Attack::rookAttacks(Chess::Square sq, BitBoard occ) {
@@ -812,14 +931,16 @@ void Legal::generateAllMoves(const Chess::Board* board, MoveList& move_list) {
     MoveList pseudo_moves;
     PseudoLegal::generateAllMoves(board, board->getTurn(), pseudo_moves);
 
+    Chess::Board temp_board = *board;
+
     for (const Move &move : pseudo_moves) {
 
         // TODO(Tejas): Use undo move instead of making a copy.
-        Chess::Board temp_board = *board;
         if (temp_board.makeMove(move)) {
             if (!inCheck(&temp_board, board->getTurn())) {
                 move_list.push_back(move);
             }
+            temp_board.unMakeMove(move);
         }
     }
 }
@@ -829,14 +950,15 @@ void Legal::generateMovesForSquare(const Chess::Board* board, Chess::Square sq, 
     MoveList pseudo_moves;
     PseudoLegal::generateMovesForSquare(board, sq, pseudo_moves);
 
+    Chess::Board temp_board = *board;
+
     for (const Move &move : pseudo_moves) {
 
-        // TODO(Tejas): Use undo move instead of making a copy.
-        Chess::Board temp_board = *board;
         if (temp_board.makeMove(move)) {
             if (!inCheck(&temp_board, board->getTurn())) {
                 move_list.push_back(move);
             }
+            temp_board.unMakeMove(move);
         }
     }
 }

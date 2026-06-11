@@ -55,13 +55,16 @@ namespace {
 
             int best = -100000;
             for (Move move : move_list) {
-                Chess::Board temp_board = *board;
-                temp_board.makeMove(move);
-                int eval = minmax(&temp_board, depth - 1, alpha, beta);
-                best = std::max(best, eval);
 
-                alpha = std::max(alpha, eval);
-                if (beta <= alpha) break;
+                if (board->makeMove(move)) {
+                    int eval = minmax(board, depth - 1, alpha, beta);
+                    best = std::max(best, eval);
+
+                    alpha = std::max(alpha, eval);
+                    if (beta <= alpha) break;
+
+                    board->unMakeMove(move);
+                }
             }
 
             return best;
@@ -70,13 +73,16 @@ namespace {
 
             int best = 100000;
             for (Move move : move_list) {
-                Chess::Board temp_board = *board;
-                temp_board.makeMove(move);
-                int eval = minmax(&temp_board, depth - 1, alpha, beta);
-                best = std::min(best, eval);
 
-                beta = std::min(beta, eval);
-                if (beta <= alpha) break;
+                if (board->makeMove(move)) {
+                    int eval = minmax(board, depth - 1, alpha, beta);
+                    best = std::min(best, eval);
+
+                    beta = std::min(beta, eval);
+                    if (beta <= alpha) break;
+
+                    board->unMakeMove(move);
+                }
             }
 
             return best;
@@ -134,7 +140,7 @@ int Engine::evaluate(Chess::Board *board) {
 
 Move Engine::getBestMove(Chess::Board *board) {
 
-    int depth = 3;
+    int depth = 4;
 
     Move best_move;
 
@@ -146,26 +152,29 @@ Move Engine::getBestMove(Chess::Board *board) {
 
     int best_score = maximizing ? -100000 : 100000;
 
+    Chess::Board temp_board = *board;
+
     for (Move move : move_list) {
 
-        Chess::Board temp_board = *board;
+        if (temp_board.makeMove(move)) {
 
-        temp_board.makeMove(move);
+            int eval = minmax(&temp_board, depth - 1, -100000, 100000);
 
-        int eval = minmax(&temp_board, depth - 1, -100000, 100000);
+            std::cout << "Move: " << move.from.toString() << " -> " << move.to.toString() << " Eval: " << eval << std::endl;
 
-        std::cout << "Move: " << move.from.toString() << " -> " << move.to.toString() << " Eval: " << eval << std::endl;
-
-        if (maximizing) {
-            if (eval > best_score) {
-                best_score = eval;
-                best_move = move;
+            if (maximizing) {
+                if (eval > best_score) {
+                    best_score = eval;
+                    best_move = move;
+                }
+            } else {
+                if (eval < best_score) {
+                    best_score = eval;
+                    best_move = move;
+                }
             }
-        } else {
-            if (eval < best_score) {
-                best_score = eval;
-                best_move = move;
-            }
+
+            temp_board.unMakeMove(move);
         }
     }
 
