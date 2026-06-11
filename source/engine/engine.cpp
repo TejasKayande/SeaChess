@@ -35,60 +35,37 @@ namespace {
         return sq_idx ^ 56;
     }
 
-    // TODO(Tejas): Change this to negamax, maybe.. do research on this.
-    int minmax(Chess::Board *board, int depth, int alpha, int beta) {
+    int negamax(Chess::Board *board, int depth, int alpha, int beta) {
 
         if (depth == 0) return Engine::evaluate(board);
 
-        bool maximizing = (board->getTurn() == Chess::Player::LIGHT);
-
         MoveList move_list;
         MoveGen::Legal::generateAllMoves(board, move_list);
-        
+
         if (move_list.empty()) {
             if (MoveGen::Legal::inCheck(board, board->getTurn()))
-                return maximizing ? -100000 : 100000;
-            return 0;
+                return -100000;
+
+            return 0; // stalemate
         }
 
-        if (maximizing) {
+        int best = -100000;
 
-            int best = -100000;
-            for (Move move : move_list) {
+        for (Move move : move_list) {
 
-                if (board->makeMove(move)) {
-                    int eval = minmax(board, depth - 1, alpha, beta);
-                    best = std::max(best, eval);
+            if (board->makeMove(move)) {
 
-                    alpha = std::max(alpha, eval);
-                    if (beta <= alpha) break;
+                int score = -negamax(board, depth - 1, -beta, -alpha);
+                board->unMakeMove(move);
 
-                    board->unMakeMove(move);
-                }
+                best = std::max(best, score);
+                alpha = std::max(alpha, score);
+
+                if (alpha >= beta) break;
             }
-
-            return best;
-
-        } else {
-
-            int best = 100000;
-            for (Move move : move_list) {
-
-                if (board->makeMove(move)) {
-                    int eval = minmax(board, depth - 1, alpha, beta);
-                    best = std::min(best, eval);
-
-                    beta = std::min(beta, eval);
-                    if (beta <= alpha) break;
-
-                    board->unMakeMove(move);
-                }
-            }
-
-            return best;
         }
 
-        return 0; // should never reach here
+        return best;
     }
 
 } // namespace Anonymous
@@ -135,7 +112,9 @@ int Engine::evaluate(Chess::Board *board) {
     if (std::popcount(whiteBishops) >= 2) bishop_pair += BISHOP_PAIR_BONUS;
     if (std::popcount(blackBishops) >= 2) bishop_pair -= BISHOP_PAIR_BONUS;
 
-    return material + pst + bishop_pair;
+    int score = material + pst + bishop_pair;
+
+    return board->getTurn() == Chess::Player::LIGHT ? score : -score; 
 }
 
 Move Engine::getBestMove(Chess::Board *board) {
@@ -146,35 +125,33 @@ Move Engine::getBestMove(Chess::Board *board) {
 
     MoveList move_list;
     MoveGen::Legal::generateAllMoves(board, move_list);
+
     if (move_list.empty()) return best_move;
 
-    bool maximizing = board->getTurn() == Chess::Player::LIGHT;
-
-    int best_score = maximizing ? -100000 : 100000;
-
+    int best_score = -100000;
     Chess::Board temp_board = *board;
 
     for (Move move : move_list) {
 
         if (temp_board.makeMove(move)) {
 
-            int eval = minmax(&temp_board, depth - 1, -100000, 100000);
-
-            std::cout << "Move: " << move.from.toString() << " -> " << move.to.toString() << " Eval: " << eval << std::endl;
-
-            if (maximizing) {
-                if (eval > best_score) {
-                    best_score = eval;
-                    best_move = move;
-                }
-            } else {
-                if (eval < best_score) {
-                    best_score = eval;
-                    best_move = move;
-                }
-            }
+            int eval = -negamax(&temp_board, depth - 1, -100000, 100000);
 
             temp_board.unMakeMove(move);
+
+            std::cout
+                << "Move: "
+                << move.from.toString()
+                << " -> "
+                << move.to.toString()
+                << " Eval: "
+                << eval
+                << std::endl;
+
+            if (eval > best_score) {
+                best_score = eval;
+                best_move = move;
+            }
         }
     }
 

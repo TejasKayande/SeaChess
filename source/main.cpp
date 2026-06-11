@@ -26,7 +26,7 @@ TODO(Tejas):
 
 
 // TODO(Tejas): Setup a perft test suite with different positions.
-#define RUN_PERFTEST 1
+#define RUN_PERFTEST 0
 
 #if RUN_PERFTEST
 #include "core/perft.hpp"

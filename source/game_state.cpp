@@ -138,7 +138,7 @@ WindowEvent GameState::update() {
 
     bool move_made = false;
 
-    if (m_board->getTurn() == Chess::Player::DARK && false) {
+    if (m_board->getTurn() == Chess::Player::DARK && true) {
         Move best_move = Engine::getBestMove(m_board);
         m_board->makeMove(best_move);
         m_move_list.clear();
