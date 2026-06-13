@@ -571,33 +571,3 @@ Square Board::getEnPassantTarget() const {
 
     return _en_passant_target;
 }
-
-
-void Board::print() const {
-
-    for (int i = 0; i < 64; ++i) {
-        Square sq(i);
-        Piece p = getPieceAt(sq);
-
-        char c = '.';
-        if (!p.isEmpty()) {
-            switch (p.type()) {
-                case PType::PAWN:   c = 'p'; break;
-                case PType::KNIGHT: c = 'n'; break;
-                case PType::BISHOP: c = 'b'; break;
-                case PType::ROOK:   c = 'r'; break;
-                case PType::QUEEN:  c = 'q'; break;
-                case PType::KING:   c = 'k'; break;
-                default: break;
-            }
-
-            if (p.color() == PColor::LIGHT)
-                c = toupper(c);
-        }
-
-        std::cout << c << " ";
-
-        if (sq.file() == 7)
-            std::cout << "\n";
-    }
-}

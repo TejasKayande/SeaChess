@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(dependencies/raylib)
-# add_subdirectory(dependencies/googletest)
+add_subdirectory(dependencies/googletest)
 enable_testing()
 
 add_library(chess_core
@@ -16,8 +16,14 @@ add_library(chess_core
     source/engine/engine.cpp
 )
 
+add_executable(ChessUCI
+    source/main_uci.cpp
+)
+
+target_link_libraries(ChessUCI PRIVATE chess_core)
+
 add_executable(${PROJECT_NAME}
-    source/main.cpp
+    source/main_gui.cpp
     source/window.cpp
     source/assets.cpp
     source/render.cpp
@@ -26,31 +32,27 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} PRIVATE chess_core raylib)
 
-if(NOT EMSCRIPTEN)
-    add_subdirectory(dependencies/googletest)
-    enable_testing()
+add_executable(Tests
+    tests/test_main.cpp
+    tests/test_square.cpp
+    tests/test_piece.cpp
+    tests/test_board.cpp
+    tests/test_fen.cpp
+    tests/test_movegen.cpp
+)
 
-    add_executable(Tests
-        tests/test_main.cpp
-        tests/test_square.cpp
-        tests/test_piece.cpp
-        tests/test_board.cpp
-        tests/test_fen.cpp
-        tests/test_movegen.cpp
-    )
+target_link_libraries(Tests
+    PRIVATE chess_core
+    gtest
+    gtest_main
+)
 
-    target_link_libraries(Tests
-        PRIVATE chess_core
-        gtest
-        gtest_main
-    )
+add_test(NAME ChessTests COMMAND Tests)
 
-    add_test(NAME ChessTests COMMAND Tests)
-endif()
-
-if (WIN32 AND NOT EMSCRIPTEN)
+if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
     target_compile_options(${PROJECT_NAME} PRIVATE /MP)
+    target_compile_options(ChessUCI PRIVATE /MP)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>

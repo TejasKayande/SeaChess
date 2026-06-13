@@ -87,8 +87,6 @@ namespace Chess {
         u8 getCastlingRights() const;
         Square getEnPassantTarget() const;
 
-        void print() const;
-
     private:
 
         // TODO(Tejas): Replace these with arrays or something, this is pretty
