@@ -157,6 +157,9 @@ GameState::GameState() {
     m_engine_player = Chess::Player::DARK;
 
     m_is_game_over = false;
+
+    m_board->setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 0");
+    std::cout << m_board->getFen() << std::endl;
 }
 
 GameState::~GameState() {
@@ -191,6 +194,9 @@ WindowEvent GameState::update() {
         }
     }
 
+    // NOTE(Tejas): we dont want to allow any movements on the board if the game is over.
+    // TODO(Tejas): Should probably refactor all the different components from update().
+    if (m_is_game_over) return WindowEvent::NONE;
     bool move_made = false;
 
     if (m_playing_engine && m_board->getTurn() == m_engine_player) {

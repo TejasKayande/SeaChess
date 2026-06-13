@@ -30,9 +30,10 @@ void Board::setFen(const std::string& fen) {
     _castling_rights = 0;
     _turn = Player::LIGHT;
 
+    // TODO(Tejas): implement half move and full move parsing.
     std::istringstream ss(fen);
-    std::string board_part, turn_part, castle_part, en_passant_part;
-    ss >> board_part >> turn_part >> castle_part >> en_passant_part;
+    std::string board_part, turn_part, castle_part, en_passant_part, half_move, full_move;
+    ss >> board_part >> turn_part >> castle_part >> en_passant_part >> half_move >> full_move;
 
     int rank = 7;
     int file = 7;
@@ -103,47 +104,79 @@ std::string Board::getFen() const {
     std::ostringstream fen;
 
     for (int rank = 7; rank >= 0; --rank) {
-        int emptyCount = 0;
 
-        for (int file = 0; file < 8; ++file) {
+        int empty_count = 0;
+
+        for (int file = 7; file >= 0; --file) {
+
             Square sq(rank, file);
-            Piece p = getPieceAt(sq);
+            Piece piece = getPieceAt(sq);
 
-            if (p.isEmpty()) {
-                emptyCount++;
-            } else {
-                if (emptyCount > 0) {
-                    fen << emptyCount;
-                    emptyCount = 0;
-                }
-
-                char c = '?';
-                switch (p.type()) {
-                    case PType::PAWN:   c = 'p'; break;
-                    case PType::KNIGHT: c = 'n'; break;
-                    case PType::BISHOP: c = 'b'; break;
-                    case PType::ROOK:   c = 'r'; break;
-                    case PType::QUEEN:  c = 'q'; break;
-                    case PType::KING:   c = 'k'; break;
-                    default: break;
-                }
-
-                if (p.color() == PColor::LIGHT)
-                    c = toupper(c);
-
-                fen << c;
+            if (piece.isEmpty()) {
+                empty_count++;
+                continue;
             }
+
+            if (empty_count > 0) {
+                fen << empty_count;
+                empty_count = 0;
+            }
+
+            char c = '?';
+
+            switch (piece.type()) {
+
+                case PType::PAWN:   c = 'p'; break;
+                case PType::KNIGHT: c = 'n'; break;
+                case PType::BISHOP: c = 'b'; break;
+                case PType::ROOK:   c = 'r'; break;
+                case PType::QUEEN:  c = 'q'; break;
+                case PType::KING:   c = 'k'; break;
+
+                default: break;
+            }
+
+            if (piece.color() == PColor::LIGHT) c = std::toupper(c);
+
+            fen << c;
         }
 
-        if (emptyCount > 0)
-            fen << emptyCount;
-
-        if (rank > 0)
-            fen << '/';
+        if (empty_count > 0) fen << empty_count;
+        if (rank > 0)        fen << '/';
     }
 
-    fen << ' ' << (_turn == Player::LIGHT ? 'w' : 'b');
-    fen << " - - 0 1"; // default placeholders
+    fen << ' ';
+    fen << (_turn == Player::LIGHT ? 'w' : 'b');
+
+    fen << ' ';
+    bool has_castling = false;
+
+    if (_castling_rights & CastlingRights::LIGHT_KING_SIDE) {
+        fen << 'K';
+        has_castling = true;
+    }
+
+    if (_castling_rights & CastlingRights::LIGHT_QUEEN_SIDE) {
+        fen << 'Q';
+        has_castling = true;
+    }
+
+    if (_castling_rights & CastlingRights::DARK_KING_SIDE) {
+        fen << 'k';
+        has_castling = true;
+    }
+
+    if (_castling_rights & CastlingRights::DARK_QUEEN_SIDE) {
+        fen << 'q';
+        has_castling = true;
+    }
+
+    if (!has_castling)
+        fen << '-';
+
+    fen << ' ';
+    if (_en_passant_target.isValid()) fen << _en_passant_target.toString();
+    else                              fen << '-';
 
     return fen.str();
 }

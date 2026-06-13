@@ -4,10 +4,7 @@ project(Chess LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 add_subdirectory(dependencies/raylib)
-add_subdirectory(dependencies/googletest)
-enable_testing()
 
 add_library(chess_core
     source/core/board.cpp
@@ -16,13 +13,13 @@ add_library(chess_core
     source/engine/engine.cpp
 )
 
-add_executable(ChessUCI
+add_executable(seachess_uci
     source/main_uci.cpp
 )
 
-target_link_libraries(ChessUCI PRIVATE chess_core)
+target_link_libraries(seachess_uci PRIVATE chess_core)
 
-add_executable(${PROJECT_NAME}
+add_executable(seachess
     source/main_gui.cpp
     source/window.cpp
     source/assets.cpp
@@ -30,53 +27,12 @@ add_executable(${PROJECT_NAME}
     source/game_state.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE chess_core raylib)
-
-add_executable(Tests
-    tests/test_main.cpp
-    tests/test_square.cpp
-    tests/test_piece.cpp
-    tests/test_board.cpp
-    tests/test_fen.cpp
-    tests/test_movegen.cpp
-)
-
-target_link_libraries(Tests
-    PRIVATE chess_core
-    gtest
-    gtest_main
-)
-
-add_test(NAME ChessTests COMMAND Tests)
+target_link_libraries(seachess PRIVATE chess_core raylib)
 
 if (WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
-    target_compile_options(${PROJECT_NAME} PRIVATE /MP)
-    target_compile_options(ChessUCI PRIVATE /MP)
+    target_compile_options(seachess PRIVATE /MP)
+    target_compile_options(seachess_uci PRIVATE /MP)
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>
-    )
-
-    target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>
-    )
-endif()
-
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
-
-if(EMSCRIPTEN)
-
-    set_target_properties(${PROJECT_NAME}
-        PROPERTIES
-        SUFFIX ".html"
-    )
-
-    target_link_options(${PROJECT_NAME}
-        PRIVATE
-        "-sUSE_GLFW=3"
-        "-sASYNCIFY"
-        "--preload-file=${CMAKE_SOURCE_DIR}/assets@/assets"
-    )
-
+    set_target_properties(seachess PROPERTIES WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>)
+    target_link_options(seachess PRIVATE $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>)
 endif()

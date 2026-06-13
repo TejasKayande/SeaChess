@@ -13,6 +13,7 @@
 
 using Args = std::vector<std::string>;
 
+// TODO(Tejas): Maybe this can have the number of arguments it expects.
 struct Command {
     std::string name;
     std::function<void(Args& args)> proc;
@@ -21,6 +22,45 @@ struct Command {
 static std::vector<Command> commands;
 static bool running;
 static Chess::Board *board;
+
+Chess::Square parseSquare(const std::string& str) {
+
+    if (str.size() != 2) return Chess::Square::invalid();
+
+    char file_char = str[0];
+    char rank_char = str[1];
+
+    if (file_char < 'a' || file_char > 'h' || rank_char < '1' || rank_char > '8') {
+        return Chess::Square::invalid();
+    }
+
+    int file = 'h' - file_char;
+    int rank = rank_char - '1';
+
+    return Chess::Square(rank, file);
+}
+
+void move(std::string move_string) {
+
+    std::string from_str = move_string.substr(0, 2);
+    std::string to_str   = move_string.substr(2, 2);
+
+    Chess::Square from = parseSquare(from_str);
+    Chess::Square to   = parseSquare(to_str);
+
+    if (!from.isValid() || !to.isValid()) {
+        return;
+    }
+
+    MoveList move_list;
+    MoveGen::Legal::generateAllMoves(board, move_list);
+
+    for (const Move& move : move_list) {
+        if (move.from == from && move.to == to) {
+            if (board->makeMove(move)) return;
+        }
+    }
+}
 
 void uci(Args& args) {
     if (args.size() > 0) std::cout << "uci command should not have any arguments" << std::endl;
@@ -35,20 +75,46 @@ void isready(Args& args) {
 }
 
 void position(Args& args) {
-    std::cout << "Non Command Args: " << args.size() << std::endl;
-    for (const auto& arg : args) {
-        std::cout << arg << " | ";
+
+    if (args.size() < 1) {
+        std::cout << "position command should have at least 1 argument" << std::endl;
+        return;
     }
-    std::cout << "position command received" << std::endl;
+
+    if (args[0] == "startpos") {
+        board->setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    } else if (args[0] == "fen") {
+        std::string fen;
+        for (size_t i = 1; i < args.size(); ++i) {
+            if (args[i] == "moves") break;
+            fen += args[i];
+            if (i != args.size() - 1) fen += ' ';
+        }
+        board->setFen(fen);
+    } else {
+        return;
+    }
+
+    for (int i = 0; i < args.size(); i++) {
+        if (args[i] == "moves") {
+            for (size_t j = i + 1; j < args.size(); j++) {
+                move(args[j]);
+            }
+            break;
+        }
+    }
 }
 
 void go(Args& args) {
-    std::cout << "Non Command Args: " << args.size() << std::endl;
-    for (const auto& arg : args) {
-        std::cout << arg << " | ";
+    if (args.size() < 1) {
+        std::cout << "position command should have at least 1 argument" << std::endl;
+        return;
     }
-    std::cout << std::endl;
-    std::cout << "go command received" << std::endl;
+
+    if (args[0] == "perft") {
+        int depth = std::stoi(args[1]);
+        PerfTest::runPerftest(board, depth);
+    }
 }
 
 void quit(Args& args) {
@@ -56,23 +122,9 @@ void quit(Args& args) {
     running = false;
 }
 
-void initCommands(void) {
-    commands = std::vector<Command>({
-        { "uci"     , uci      },
-        { "isready" , isready  },
-        { "position", position },
-        { "go"      , go       },
-        { "quit"    , quit     }
-    });
-}
+void printBoard(Args& args) {
 
-void initBoard(void) {
-
-    board = new Chess::Board();
-    board->setFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
-}
-
-void printBoard(void) {
+    if (args.size() > 0) std::cout << "isready command should not have any arguments" << std::endl;
 
     auto pieceToChar = [](const Chess::Piece& piece) -> char {
 
@@ -106,7 +158,25 @@ void printBoard(void) {
 
     std::cout << "+---+---+---+---+---+---+---+---+\n";
 
-    std::cout << "  a   b   c   d   e   f   g   h\n";
+    std::cout << "  a   b   c   d   e   f   g   h\n" << std::endl;
+
+    std::cout << "FEN: " << board->getFen() << std::endl;
+}
+
+void initCommands(void) {
+    commands = std::vector<Command>({
+        { "uci"     , uci        },
+        { "isready" , isready    },
+        { "position", position   },
+        { "go"      , go         },
+        { "quit"    , quit       },
+        { "d"       , printBoard },
+    });
+}
+
+void initBoard(void) {
+    MoveGen::init();
+    board = new Chess::Board();
 }
 
 int main(int argc, char** argv) {
@@ -114,8 +184,6 @@ int main(int argc, char** argv) {
     initCommands();
     initBoard();
     running = true;
-
-    printBoard();
 
     while (running) {
 

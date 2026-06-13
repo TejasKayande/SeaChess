@@ -119,7 +119,7 @@ int Engine::evaluate(Chess::Board *board) {
 
 Move Engine::getBestMove(Chess::Board *board) {
 
-    int depth = 4;
+    int depth = 5;
 
     Move best_move;
 
