@@ -21,7 +21,7 @@ struct Command {
 
 static std::vector<Command> commands;
 static bool running;
-static Chess::Board *board;
+static std::shared_ptr<Chess::Board> board;
 
 Chess::Square parseSquare(const std::string& str) {
 
@@ -44,6 +44,7 @@ void move(std::string move_string) {
 
     std::string from_str = move_string.substr(0, 2);
     std::string to_str   = move_string.substr(2, 2);
+    std::string promo_str;
 
     Chess::Square from = parseSquare(from_str);
     Chess::Square to   = parseSquare(to_str);
@@ -53,7 +54,7 @@ void move(std::string move_string) {
     }
 
     MoveList move_list;
-    MoveGen::Legal::generateAllMoves(board, move_list);
+    MoveGen::Legal::generateAllMoves(board.get(), move_list);
 
     for (const Move& move : move_list) {
         if (move.from == from && move.to == to) {
@@ -63,23 +64,16 @@ void move(std::string move_string) {
 }
 
 void uci(Args& args) {
-    if (args.size() > 0) std::cout << "uci command should not have any arguments" << std::endl;
     std::cout << "id name SeaChess" << std::endl;
     std::cout << "id author Tejas" << std::endl;
-    std::cout << std::endl;
+    std::cout << "uciok" << std::endl;
 }
 
 void isready(Args& args) {
-    if (args.size() > 0) std::cout << "isready command should not have any arguments" << std::endl;
     std::cout << "readyok" << std::endl;
 }
 
 void position(Args& args) {
-
-    if (args.size() < 1) {
-        std::cout << "position command should have at least 1 argument" << std::endl;
-        return;
-    }
 
     if (args[0] == "startpos") {
         board->setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -111,14 +105,14 @@ void go(Args& args) {
         return;
     }
 
-    if (args[0] == "perft") {
+    if (args.size() >= 2 && args[0] == "perft") {
         int depth = std::stoi(args[1]);
-        PerfTest::runPerftest(board, depth);
+        PerfTest::runPerftest(board.get(), depth);
     }
 }
 
 void quit(Args& args) {
-    if (args.size() > 0) std::cout << "isready command should not have any arguments" << std::endl;
+    
     running = false;
 }
 
@@ -176,7 +170,7 @@ void initCommands(void) {
 
 void initBoard(void) {
     MoveGen::init();
-    board = new Chess::Board();
+    board = std::make_shared<Chess::Board>();
 }
 
 int main(int argc, char** argv) {
@@ -184,6 +178,8 @@ int main(int argc, char** argv) {
     initCommands();
     initBoard();
     running = true;
+
+    board->setFen("8/P7/8/8/8/8/8/k6K w - - 0 1");
 
     while (running) {
 
