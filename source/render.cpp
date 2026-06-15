@@ -214,10 +214,16 @@ void Render::renderStatus(const Window::Section &area, const StatusBar &status, 
 
 void Render::renderGameOver(const Window::Section &area, const std::string &result, Theme theme) {
 
-    ::DrawRectangleRec(area, ::Color{100, 100, 100, 240});
+    ::DrawRectangleRec(area, ::Color{20, 20, 20, 200});
     int text_width = ::MeasureTextEx(*theme.font, result.c_str(), 50, 2).x;
 
     ::DrawTextEx(*theme.font, result.c_str(),
                  Vector2{ (float)(Window::WINDOW_WIDTH / 2) - (text_width / 2), (float)area.y + 100 },
                  50, 2, theme.highlight);
+
+    const char* subtext = "Press ESC to open menu and start a new game.";
+    int subtext_width = ::MeasureTextEx(*theme.font, subtext, 25, 2).x;
+    ::DrawTextEx(*theme.font, subtext,
+                 Vector2{ (float)(Window::WINDOW_WIDTH / 2) - (subtext_width / 2), (float)area.y + 150 },
+                 25, 2, ::Color{255, 255, 255, 255});
 }
