@@ -35,7 +35,7 @@ namespace {
         return sq_idx ^ 56;
     }
 
-    int negamax(Chess::Board *board, int depth, int alpha, int beta) {
+    int negamax(Chess::Board *board, int depth, int play, int alpha, int beta) {
 
         if (depth == 0) return Engine::evaluate(board);
 
@@ -44,7 +44,7 @@ namespace {
 
         if (move_list.empty()) {
             if (MoveGen::Legal::inCheck(board, board->getTurn()))
-                return -100000;
+                return -100000 + play;
 
             return 0; // stalemate
         }
@@ -55,7 +55,7 @@ namespace {
 
             if (board->makeMove(move)) {
 
-                int score = -negamax(board, depth - 1, -beta, -alpha);
+                int score = -negamax(board, depth - 1, play + 1, -beta, -alpha);
                 board->unMakeMove(move);
 
                 best = std::max(best, score);
@@ -119,7 +119,7 @@ int Engine::evaluate(Chess::Board *board) {
 
 Move Engine::getBestMove(Chess::Board *board) {
 
-    int depth = 5;
+    int depth = 4;
 
     Move best_move;
 
@@ -135,7 +135,7 @@ Move Engine::getBestMove(Chess::Board *board) {
 
         if (temp_board.makeMove(move)) {
 
-            int eval = -negamax(&temp_board, depth - 1, -100000, 100000);
+            int eval = -negamax(&temp_board, depth - 1, 1, -100000, 100000);
 
             temp_board.unMakeMove(move);
 
