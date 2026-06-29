@@ -18,7 +18,7 @@ namespace {
 
     constexpr int BISHOP_PAIR_BONUS = 30;
 
-    constexpr int CASTLED_BONUS = 40;
+    constexpr int CASTLED_BONUS = 170;
     constexpr int CENTER_KING_PENALTY = 25;
 
     // NOTE(Tejas): This assumes light is at the bottom, we have to flip the
@@ -43,6 +43,17 @@ namespace {
         -30,  5, 10, 15, 15, 10,  5,-30,
         -40,-20,  0,  5,  5,  0,-20,-40,
         -50,-40,-30,-30,-30,-30,-40,-50
+    };
+
+    constexpr int PAWN_PST[64] = {
+         0,   0,   0,   0,   0,   0,   0,   0,
+        50,  50,  50,  50,  50,  50,  50,  50,
+        10,  10,  20,  30,  30,  20,  10,  10,
+         5,   5,  10,  25,  25,  10,   5,   5,
+         0,   0,   0,  20,  20,   0,   0,   0,
+         5,  -5, -10,   0,   0, -10,  -5,   5,
+         5,  10,  10, -20, -20,  10,  10,   5,
+         0,   0,   0,   0,   0,   0,   0,   0
     };
 
     constexpr int mirrorSquare(int sq_idx) {
@@ -139,6 +150,7 @@ int Engine::evaluate(Chess::Board *board) {
             material += entry.value;
             if (entry.type == Chess::Piece::BISHOP) pst += BISHOP_PST[sq];
             if (entry.type == Chess::Piece::KNIGHT) pst += KNIGHT_PST[sq];
+            if (entry.type == Chess::Piece::PAWN)   pst += PAWN_PST[sq];
         }
 
         bb = board->getPiecesOfType(entry.type, Chess::Player::DARK);
@@ -147,6 +159,7 @@ int Engine::evaluate(Chess::Board *board) {
             material -= entry.value;
             if (entry.type == Chess::Piece::BISHOP) pst -= BISHOP_PST[mirrorSquare(sq)];
             if (entry.type == Chess::Piece::KNIGHT) pst -= KNIGHT_PST[mirrorSquare(sq)];
+            if (entry.type == Chess::Piece::PAWN)   pst -= PAWN_PST[mirrorSquare(sq)];
         }
     }
 
