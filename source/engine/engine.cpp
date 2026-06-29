@@ -18,8 +18,22 @@ namespace {
 
     constexpr int BISHOP_PAIR_BONUS = 30;
 
+    constexpr int CASTLED_BONUS = 40;
+    constexpr int CENTER_KING_PENALTY = 25;
+
     // NOTE(Tejas): This assumes light is at the bottom, we have to flip the
     //              ranks to get the DARK_KNIGHT_PST.
+    constexpr int BISHOP_PST[64] = {
+        -20,-10,-10,-10,-10,-10,-10,-20,
+        -10,  5,  0,  0,  0,  0,  5,-10,
+        -10, 10, 10, 10, 10, 10, 10,-10,
+        -10,  0, 10, 10, 10, 10,  0,-10,
+        -10,  5,  5, 10, 10,  5,  5,-10,
+        -10,  0,  5, 10, 10,  5,  0,-10,
+        -10,  0,  0,  0,  0,  0,  0,-10,
+        -20,-10,-10,-10,-10,-10,-10,-20
+    };
+
     constexpr int KNIGHT_PST[64] = {
         -50,-40,-30,-30,-30,-30,-40,-50,
         -40,-20,  0,  0,  0,  0,-20,-40,
@@ -33,6 +47,35 @@ namespace {
 
     constexpr int mirrorSquare(int sq_idx) {
         return sq_idx ^ 56;
+    }
+
+    bool isCastled(int kingSq, Chess::Player side) {
+
+        // TODO(Tejas): maybe add constants for these in square.hpp?
+        const Chess::Square G1 = Chess::Square(0, 1);
+        const Chess::Square C1 = Chess::Square(0, 5);
+        const Chess::Square G8 = Chess::Square(7, 1);
+        const Chess::Square C8 = Chess::Square(7, 5);
+
+        if (side == Chess::Player::LIGHT)
+            return G1 == kingSq ||
+                   C1 == kingSq ;
+
+        return G8 == kingSq  ||
+               C8 == kingSq ;
+    }
+
+    bool isCenterKing(int kingSq) {
+
+        // TODO(Tejas): maybe add constants for these in square.hpp?
+        const Chess::Square E1 = Chess::Square(0, 3);
+        const Chess::Square E8 = Chess::Square(7, 3);
+        const Chess::Square D1 = Chess::Square(0, 4);
+        const Chess::Square D8 = Chess::Square(7, 4);
+        return E1 == kingSq  ||
+               D1 == kingSq  ||
+               E8 == kingSq  ||
+               D8 == kingSq ;
     }
 
     int negamax(Chess::Board *board, int depth, int play, int alpha, int beta) {
@@ -53,10 +96,12 @@ namespace {
 
         for (Move move : move_list) {
 
-            if (board->makeMove(move)) {
+            Chess::Board temp_board = *board;
 
-                int score = -negamax(board, depth - 1, play + 1, -beta, -alpha);
-                board->unMakeMove(move);
+            if (temp_board.makeMove(move)) {
+
+                int score = -negamax(&temp_board, depth - 1, play + 1, -beta, -alpha);
+                // board->unMakeMove(move);
 
                 best = std::max(best, score);
                 alpha = std::max(alpha, score);
@@ -72,7 +117,7 @@ namespace {
 
 int Engine::evaluate(Chess::Board *board) {
 
-    int material = 0, pst = 0, bishop_pair = 0;
+    int material = 0, pst = 0, bishop_pair = 0, king_safety = 0;
 
     const struct MaterialValue {
         Chess::PType type;
@@ -92,6 +137,7 @@ int Engine::evaluate(Chess::Board *board) {
         while (bb) {
             int sq = Base::popLSB(bb);
             material += entry.value;
+            if (entry.type == Chess::Piece::BISHOP) pst += BISHOP_PST[sq];
             if (entry.type == Chess::Piece::KNIGHT) pst += KNIGHT_PST[sq];
         }
 
@@ -99,6 +145,7 @@ int Engine::evaluate(Chess::Board *board) {
         while (bb) {
             int sq = Base::popLSB(bb);
             material -= entry.value;
+            if (entry.type == Chess::Piece::BISHOP) pst -= BISHOP_PST[mirrorSquare(sq)];
             if (entry.type == Chess::Piece::KNIGHT) pst -= KNIGHT_PST[mirrorSquare(sq)];
         }
     }
@@ -112,14 +159,37 @@ int Engine::evaluate(Chess::Board *board) {
     if (std::popcount(whiteBishops) >= 2) bishop_pair += BISHOP_PAIR_BONUS;
     if (std::popcount(blackBishops) >= 2) bishop_pair -= BISHOP_PAIR_BONUS;
 
-    int score = material + pst + bishop_pair;
+    // White king
+    BitBoard whiteKing =
+        board->getPiecesOfType(Chess::Piece::KING, Chess::Player::LIGHT);
+
+    int whiteKingSq = Base::popLSB(whiteKing);
+
+    if (isCastled(whiteKingSq, Chess::Player::LIGHT))
+        king_safety += CASTLED_BONUS;
+    else if (isCenterKing(whiteKingSq))
+        king_safety -= CENTER_KING_PENALTY;
+
+
+    // Black king
+    BitBoard blackKing =
+        board->getPiecesOfType(Chess::Piece::KING, Chess::Player::DARK);
+
+    int blackKingSq = Base::popLSB(blackKing);
+
+    if (isCastled(blackKingSq, Chess::Player::DARK))
+        king_safety -= CASTLED_BONUS;
+    else if (isCenterKing(blackKingSq))
+        king_safety += CENTER_KING_PENALTY;
+
+    int score = material + pst + bishop_pair + king_safety;
 
     return board->getTurn() == Chess::Player::LIGHT ? score : -score; 
 }
 
 Move Engine::getBestMove(Chess::Board *board) {
 
-    int depth = 4;
+    int depth = 5;
 
     Move best_move;
 
@@ -129,24 +199,16 @@ Move Engine::getBestMove(Chess::Board *board) {
     if (move_list.empty()) return best_move;
 
     int best_score = -100000;
-    Chess::Board temp_board = *board;
+    // Chess::Board temp_board = *board;
 
     for (Move move : move_list) {
 
+        Chess::Board temp_board = *board;
         if (temp_board.makeMove(move)) {
 
             int eval = -negamax(&temp_board, depth - 1, 1, -100000, 100000);
 
-            temp_board.unMakeMove(move);
-
-            std::cout
-                << "Move: "
-                << move.from.toString()
-                << " -> "
-                << move.to.toString()
-                << " Eval: "
-                << eval
-                << std::endl;
+            // temp_board.unMakeMove(move);
 
             if (eval > best_score) {
                 best_score = eval;
