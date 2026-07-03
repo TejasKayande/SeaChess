@@ -200,7 +200,8 @@ WindowEvent GameState::update() {
     bool move_made = false;
 
     if (m_playing_engine && m_board->getTurn() == m_engine_player) {
-        Move best_move = Engine::getBestMove(m_board);
+        // Move best_move = Engine::getBestMove(m_board);
+        Move best_move  = Engine::searchTimed(m_board, 1000);
         m_board->makeMove(best_move);
         m_move_list.clear();
         m_sel_square = Chess::Square::invalid();
@@ -238,6 +239,22 @@ WindowEvent GameState::update() {
                 for (Move &move : m_move_list) {
 
                     if (move.to == sq) {
+
+                        switch (move.type) {
+                            case Move::PROMO_QUEEN: {
+                                if (::IsKeyDown(::KEY_ONE)) move.type = Move::PROMO_ROOK;
+                                if (::IsKeyDown(::KEY_TWO)) move.type = Move::PROMO_BISHOP;
+                                if (::IsKeyDown(::KEY_THREE)) move.type = Move::PROMO_KNIGHT;
+                            } break;
+
+                            case Move::PROMO_CAPTURE_QUEEN: {
+                                if (::IsKeyDown(::KEY_ONE)) move.type = Move::PROMO_CAPTURE_ROOK;
+                                if (::IsKeyDown(::KEY_TWO)) move.type = Move::PROMO_CAPTURE_BISHOP;
+                                if (::IsKeyDown(::KEY_THREE)) move.type = Move::PROMO_CAPTURE_KNIGHT;
+                            } break;
+
+                            default: {} break;
+                        }
 
                         if (m_board->makeMove(move)) {
 

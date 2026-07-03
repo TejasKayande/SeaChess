@@ -7,8 +7,20 @@
 #include <cstdlib>
 #include <time.h>
 #include <bit>
+#include <chrono>
 
 namespace {
+
+    struct SearchContext {
+
+        std::chrono::steady_clock::time_point start;
+        int time_limit_ms;
+
+        bool stop = false;
+
+        u64 nodes = 0;
+        Move bestMove;
+    };
 
     constexpr int PAWN_VALUE   = 100;
     constexpr int KNIGHT_VALUE = 300;
@@ -69,11 +81,9 @@ namespace {
         const Chess::Square C8 = Chess::Square(7, 5);
 
         if (side == Chess::Player::LIGHT)
-            return G1 == kingSq ||
-                   C1 == kingSq ;
+            return G1 == kingSq || C1 == kingSq;
 
-        return G8 == kingSq  ||
-               C8 == kingSq ;
+        return G8 == kingSq || C8 == kingSq;
     }
 
     bool isCenterKing(int kingSq) {
@@ -83,13 +93,27 @@ namespace {
         const Chess::Square E8 = Chess::Square(7, 3);
         const Chess::Square D1 = Chess::Square(0, 4);
         const Chess::Square D8 = Chess::Square(7, 4);
-        return E1 == kingSq  ||
-               D1 == kingSq  ||
-               E8 == kingSq  ||
-               D8 == kingSq ;
+        return E1 == kingSq  || D1 == kingSq  || E8 == kingSq  || D8 == kingSq;
     }
 
-    int negamax(Chess::Board *board, int depth, int play, int alpha, int beta) {
+    int negamax(Chess::Board *board, int depth, int play, int alpha, int beta, SearchContext& search_context) {
+
+        if (search_context.stop) return 0;
+
+        search_context.nodes++;
+
+        if ((search_context.nodes & 2047) == 0) {
+
+            auto elapsed =
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::steady_clock::now() - search_context.start
+                );
+
+            if (elapsed.count() >= search_context.time_limit_ms) {
+                search_context.stop = true;
+                return 0;
+            }
+        }
 
         if (depth == 0) return Engine::evaluate(board);
 
@@ -111,8 +135,10 @@ namespace {
 
             if (temp_board.makeMove(move)) {
 
-                int score = -negamax(&temp_board, depth - 1, play + 1, -beta, -alpha);
+                int score = -negamax(&temp_board, depth - 1, play + 1, -beta, -alpha, search_context);
                 // board->unMakeMove(move);
+
+                if (search_context.stop) return 0;
 
                 best = std::max(best, score);
                 alpha = std::max(alpha, score);
@@ -204,6 +230,10 @@ Move Engine::getBestMove(Chess::Board *board) {
 
     int depth = 5;
 
+    SearchContext search_context;
+    search_context.start = std::chrono::steady_clock::now();
+    search_context.time_limit_ms = std::numeric_limits<int>::max();
+
     Move best_move;
 
     MoveList move_list;
@@ -219,7 +249,7 @@ Move Engine::getBestMove(Chess::Board *board) {
         Chess::Board temp_board = *board;
         if (temp_board.makeMove(move)) {
 
-            int eval = -negamax(&temp_board, depth - 1, 1, -100000, 100000);
+            int eval = -negamax(&temp_board, depth - 1, 1, -100000, 100000, search_context);
 
             // temp_board.unMakeMove(move);
 
@@ -231,4 +261,54 @@ Move Engine::getBestMove(Chess::Board *board) {
     }
 
     return best_move;
+}
+
+Move Engine::searchTimed(Chess::Board *board, int time_ms) {
+
+    SearchContext search_context;
+    search_context.start = std::chrono::steady_clock::now();
+    search_context.time_limit_ms = time_ms;
+
+
+     Move bestMove;
+
+    for (int depth = 1; !search_context.stop; depth++) {
+
+        Move currentBest;
+        int bestScore = -100000;
+
+        MoveList moveList;
+        MoveGen::Legal::generateAllMoves(board, moveList);
+
+        if (moveList.empty())
+            break;
+
+        for (Move move : moveList) {
+
+            Chess::Board temp = *board;
+            if (!temp.makeMove(move)) continue;
+
+            int score = -negamax(&temp, depth - 1, 1, -100000, 100000, search_context);
+
+            if (search_context.stop)
+                break;
+
+            if (score > bestScore) {
+                bestScore = score;
+                currentBest = move;
+            }
+        }
+
+        if (!search_context.stop) {
+
+            bestMove = currentBest;
+
+            std::cout
+                << "info depth " << depth
+                << " score cp " << bestScore
+                << std::endl;
+        }
+    }
+
+    return bestMove;
 }
