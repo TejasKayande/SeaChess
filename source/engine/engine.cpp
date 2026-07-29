@@ -267,7 +267,6 @@ int Engine::evaluate(Chess::Board *board) {
         king_safety += CENTER_KING_PENALTY;
 
     BitBoard white_rooks = board->getPiecesOfType(Chess::Piece::ROOK, Chess::Player::LIGHT);
-
     BitBoard white_rook_positions = white_rooks;
 
     while (white_rooks) {
@@ -296,24 +295,18 @@ int Engine::evaluate(Chess::Board *board) {
     BitBoard black_rooks = board->getPiecesOfType(Chess::Piece::ROOK, Chess::Player::DARK);
     BitBoard black_rook_positions = black_rooks;
 
-    while (black_rooks)
-    {
+    while (black_rooks) {
+
         int sq = Base::popLSB(black_rooks);
 
-        // ChatGPT: Mirror the PST because it is defined from White's perspective.
         rook_score -= ROOK_PST[mirrorSquare(sq)];
 
         int file = sq % 8;
 
-        // ChatGPT: Reward open and semi-open files.
-        if (isOpenFile(board, file))
-            rook_score -= ROOK_OPEN_FILE_BONUS;
-        else if (isSemiOpenFile(board, file, Chess::Player::DARK))
-            rook_score -= ROOK_SEMI_OPEN_FILE_BONUS;
+        if (isOpenFile(board, file)) rook_score -= ROOK_OPEN_FILE_BONUS;
+        else if (isSemiOpenFile(board, file, Chess::Player::DARK)) rook_score -= ROOK_SEMI_OPEN_FILE_BONUS;
 
-        // ChatGPT: Reward rooks on White's 7th rank.
-        if ((mirrorSquare(sq) / 8) == 6)
-            rook_score -= ROOK_ON_7TH_BONUS;
+        if ((mirrorSquare(sq) / 8) == 6) rook_score -= ROOK_ON_7TH_BONUS;
 
         BitBoard attacks = MoveGen::Attack::rookAttacks(sq, board->getOccupied());
 
