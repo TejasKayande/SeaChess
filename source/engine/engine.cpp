@@ -33,8 +33,25 @@ namespace {
     constexpr int CASTLED_BONUS = 170;
     constexpr int CENTER_KING_PENALTY = 25;
 
+    constexpr int ROOK_OPEN_FILE_BONUS      = 30;
+    constexpr int ROOK_SEMI_OPEN_FILE_BONUS = 15;
+    constexpr int ROOK_ON_7TH_BONUS         = 25;
+    constexpr int ROOK_CONNECTED_BONUS      = 15;
+    constexpr int ROOK_MOBILITY_BONUS       = 3;
+
     // NOTE(Tejas): This assumes light is at the bottom, we have to flip the
     //              ranks to get the DARK_KNIGHT_PST.
+    constexpr int ROOK_PST[64] = {
+         0,  0,  5, 10, 10,  5,  0,  0,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+         5, 10, 10, 10, 10, 10, 10,  5,
+         0,  0,  0,  0,  0,  0,  0,  0
+    };
+
     constexpr int BISHOP_PST[64] = {
         -20,-10,-10,-10,-10,-10,-10,-20,
         -10,  5,  0,  0,  0,  0,  5,-10,
@@ -68,6 +85,7 @@ namespace {
          0,   0,   0,   0,   0,   0,   0,   0
     };
 
+
     constexpr int mirrorSquare(int sq_idx) {
         return sq_idx ^ 56;
     }
@@ -94,6 +112,37 @@ namespace {
         const Chess::Square D1 = Chess::Square(0, 4);
         const Chess::Square D8 = Chess::Square(7, 4);
         return E1 == kingSq  || D1 == kingSq  || E8 == kingSq  || D8 == kingSq;
+    }
+
+    bool isOpenFile(Chess::Board* board, int file) {
+
+        BitBoard white_pawns = board->getPiecesOfType(Chess::Piece::PAWN, Chess::Player::LIGHT);
+
+        while (white_pawns) {
+            int sq = Base::popLSB(white_pawns);
+            if ((sq % 8) == file) return false;
+        }
+
+        BitBoard black_pawns = board->getPiecesOfType(Chess::Piece::PAWN, Chess::Player::DARK);
+
+        while (black_pawns) {
+            int sq = Base::popLSB(black_pawns);
+            if ((sq % 8) == file) return false;
+        }
+
+        return true;
+    }
+
+    bool isSemiOpenFile(Chess::Board* board, int file, Chess::Player side) {
+
+        BitBoard own_pawns = board->getPiecesOfType(Chess::Piece::PAWN, side);
+
+        while (own_pawns) {
+            int sq = Base::popLSB(own_pawns);
+            if ((sq % 8) == file) return false;
+        }
+
+        return true;
     }
 
     int negamax(Chess::Board *board, int depth, int play, int alpha, int beta, SearchContext& search_context) {
@@ -150,11 +199,13 @@ namespace {
         return best;
     }
 
+
+
 } // namespace Anonymous
 
 int Engine::evaluate(Chess::Board *board) {
 
-    int material = 0, pst = 0, bishop_pair = 0, king_safety = 0;
+    int material = 0, pst = 0, bishop_pair = 0, rook_score = 0, king_safety = 0;
 
     const struct MaterialValue {
         Chess::PType type;
@@ -190,39 +241,90 @@ int Engine::evaluate(Chess::Board *board) {
     }
 
     // NOTE(Tejas): A bishop pair is considered an advantage, so we will give a small bonus for it
-    BitBoard whiteBishops = board->getPiecesOfType(Chess::Piece::BISHOP, Chess::Player::LIGHT);
-    BitBoard blackBishops = board->getPiecesOfType(Chess::Piece::BISHOP, Chess::Player::DARK);
+    BitBoard white_bishops = board->getPiecesOfType(Chess::Piece::BISHOP, Chess::Player::LIGHT);
+    BitBoard black_bishops = board->getPiecesOfType(Chess::Piece::BISHOP, Chess::Player::DARK);
 
     // NOTE(Tejas): A player could have more than 2 bishops but I think its okay
     //              if we just award only the pair bonus.
-    if (std::popcount(whiteBishops) >= 2) bishop_pair += BISHOP_PAIR_BONUS;
-    if (std::popcount(blackBishops) >= 2) bishop_pair -= BISHOP_PAIR_BONUS;
+    if (std::popcount(white_bishops) >= 2) bishop_pair += BISHOP_PAIR_BONUS;
+    if (std::popcount(black_bishops) >= 2) bishop_pair -= BISHOP_PAIR_BONUS;
 
     // White king
-    BitBoard whiteKing =
-        board->getPiecesOfType(Chess::Piece::KING, Chess::Player::LIGHT);
+    BitBoard white_king = board->getPiecesOfType(Chess::Piece::KING, Chess::Player::LIGHT);
+    int white_king_sq = Base::popLSB(white_king);
 
-    int whiteKingSq = Base::popLSB(whiteKing);
-
-    if (isCastled(whiteKingSq, Chess::Player::LIGHT))
-        king_safety += CASTLED_BONUS;
-    else if (isCenterKing(whiteKingSq))
-        king_safety -= CENTER_KING_PENALTY;
+    if (isCastled(white_king_sq, Chess::Player::LIGHT)) king_safety += CASTLED_BONUS;
+    else if (isCenterKing(white_king_sq)) king_safety -= CENTER_KING_PENALTY;
 
 
     // Black king
-    BitBoard blackKing =
-        board->getPiecesOfType(Chess::Piece::KING, Chess::Player::DARK);
+    BitBoard black_king = board->getPiecesOfType(Chess::Piece::KING, Chess::Player::DARK);
+    int black_king_sq = Base::popLSB(black_king);
 
-    int blackKingSq = Base::popLSB(blackKing);
-
-    if (isCastled(blackKingSq, Chess::Player::DARK))
+    if (isCastled(black_king_sq, Chess::Player::DARK))
         king_safety -= CASTLED_BONUS;
-    else if (isCenterKing(blackKingSq))
+    else if (isCenterKing(black_king_sq))
         king_safety += CENTER_KING_PENALTY;
 
-    int score = material + pst + bishop_pair + king_safety;
+    BitBoard white_rooks = board->getPiecesOfType(Chess::Piece::ROOK, Chess::Player::LIGHT);
 
+    BitBoard white_rook_positions = white_rooks;
+
+    while (white_rooks) {
+
+        int sq = Base::popLSB(white_rooks);
+
+        rook_score += ROOK_PST[sq];
+
+        int file = sq % 8;
+
+        if (isOpenFile(board, file)) rook_score += ROOK_OPEN_FILE_BONUS;
+        else if (isSemiOpenFile(board, file, Chess::Player::LIGHT)) rook_score += ROOK_SEMI_OPEN_FILE_BONUS;
+
+        if ((sq / 8) == 6) rook_score += ROOK_ON_7TH_BONUS;
+
+        BitBoard attacks = MoveGen::Attack::rookAttacks(sq, board->getOccupied());
+
+        BitBoard other_rooks = white_rook_positions;
+        other_rooks &= ~(BitBoard(1) << sq);
+
+        if (attacks & other_rooks) rook_score += ROOK_CONNECTED_BONUS;
+
+        rook_score += std::popcount(attacks) * ROOK_MOBILITY_BONUS;
+    }
+
+    BitBoard black_rooks = board->getPiecesOfType(Chess::Piece::ROOK, Chess::Player::DARK);
+    BitBoard black_rook_positions = black_rooks;
+
+    while (black_rooks)
+    {
+        int sq = Base::popLSB(black_rooks);
+
+        // ChatGPT: Mirror the PST because it is defined from White's perspective.
+        rook_score -= ROOK_PST[mirrorSquare(sq)];
+
+        int file = sq % 8;
+
+        // ChatGPT: Reward open and semi-open files.
+        if (isOpenFile(board, file))
+            rook_score -= ROOK_OPEN_FILE_BONUS;
+        else if (isSemiOpenFile(board, file, Chess::Player::DARK))
+            rook_score -= ROOK_SEMI_OPEN_FILE_BONUS;
+
+        // ChatGPT: Reward rooks on White's 7th rank.
+        if ((mirrorSquare(sq) / 8) == 6)
+            rook_score -= ROOK_ON_7TH_BONUS;
+
+        BitBoard attacks = MoveGen::Attack::rookAttacks(sq, board->getOccupied());
+
+        BitBoard other_rooks = black_rook_positions;
+        other_rooks &= ~(BitBoard(1) << sq);
+
+        if (attacks & other_rooks) rook_score -= ROOK_CONNECTED_BONUS;
+        rook_score -= std::popcount(attacks) * ROOK_MOBILITY_BONUS;
+    }
+
+    int score = material + pst + bishop_pair + king_safety + rook_score;
     return board->getTurn() == Chess::Player::LIGHT ? score : -score; 
 }
 
