@@ -1,5 +1,6 @@
 
 #include "board.hpp"
+#include "zobrist.hpp"
 #include <sstream>
 #include <bitset>
 
@@ -8,7 +9,7 @@ using namespace Chess;
 Board::Board() 
 : _lPawn(0), _lKnight(0), _lBishop(0), _lRook(0), _lQueen(0), _lKing(0),
   _dPawn(0), _dKnight(0), _dBishop(0), _dRook(0), _dQueen(0), _dKing(0),
-  _lOccupied(0), _dOccupied(0), _turn(Player::LIGHT)
+  _lOccupied(0), _dOccupied(0), _turn(Player::LIGHT), _hash(0)
 {
     reset();
 }
@@ -16,6 +17,42 @@ Board::Board()
 void Board::_updateOccupancy() {
     _lOccupied = _lPawn | _lKnight | _lBishop | _lRook | _lQueen | _lKing;
     _dOccupied = _dPawn | _dKnight | _dBishop | _dRook | _dQueen | _dKing;
+}
+
+void Board::_computeHash() {
+    _hash = 0;
+    
+    auto addPieces = [&](BitBoard bb, PType type, PColor color) {
+        u8 code = Piece(type, color).code;
+        while (bb) {
+            int sq = Base::popLSB(bb);
+            _hash ^= Zobrist::pieceKeys[code][sq];
+        }
+    };
+
+    addPieces(_lPawn, PType::PAWN, PColor::LIGHT);
+    addPieces(_lKnight, PType::KNIGHT, PColor::LIGHT);
+    addPieces(_lBishop, PType::BISHOP, PColor::LIGHT);
+    addPieces(_lRook, PType::ROOK, PColor::LIGHT);
+    addPieces(_lQueen, PType::QUEEN, PColor::LIGHT);
+    addPieces(_lKing, PType::KING, PColor::LIGHT);
+
+    addPieces(_dPawn, PType::PAWN, PColor::DARK);
+    addPieces(_dKnight, PType::KNIGHT, PColor::DARK);
+    addPieces(_dBishop, PType::BISHOP, PColor::DARK);
+    addPieces(_dRook, PType::ROOK, PColor::DARK);
+    addPieces(_dQueen, PType::QUEEN, PColor::DARK);
+    addPieces(_dKing, PType::KING, PColor::DARK);
+
+    if (_turn == Player::DARK) {
+        _hash ^= Zobrist::sideToMoveKey;
+    }
+
+    _hash ^= Zobrist::castlingKeys[_castling_rights & 0xF];
+
+    if (_en_passant_target.isValid()) {
+        _hash ^= Zobrist::enPassantKeys[_en_passant_target.toIndex() % 8];
+    }
 }
 
 void Board::setFen(const std::string& fen) {
@@ -97,6 +134,8 @@ void Board::setFen(const std::string& fen) {
 
         _en_passant_target = Square(ep_rank, ep_file);
     }
+
+    _computeHash();
 }
 
 std::string Board::getFen() const {
@@ -303,16 +342,22 @@ void Board::reset() {
     _en_passant_target = Square::invalid();
 
     _turn = Player::LIGHT;
+
+    _computeHash();
 }
 
-bool Board::makeMove(const Move& m) {
-
-    bool move_made = false;
+bool Board::makeMove(const Move& m, UndoContext& undo_ctx) {
 
     Piece moving_piece = getPieceAt(m.from);
 
     if (moving_piece.isEmpty() || moving_piece.color() != getTurn()) return false;
 
+    // NOTE(Tejas): Save all irreversible state BEFORE modifying anything.
+    undo_ctx.move              = m;
+    undo_ctx.castling_rights   = _castling_rights;
+    undo_ctx.en_passant_target = _en_passant_target;
+
+    bool move_made = false;
     if (m.type != MoveType::DOUBLE_PAWN_PUSH) _en_passant_target = Square::invalid();
 
     switch (m.type) {
@@ -452,22 +497,32 @@ bool Board::makeMove(const Move& m) {
         default: {} break;
     }
 
-    if (move_made) changeTurn();
+    if (move_made) {
+        changeTurn();
+        _computeHash();
+    }
 
     return move_made;
 }
 
-bool Board::unMakeMove(const Move& m) {
+bool Board::unMakeMove(const UndoContext& undo_ctx) {
 
-    // NOTE(Tejas): This can only undo move that was the latest on the board.
-    bool move_unmade = false;
+    // NOTE(Tejas): This can only undo the move that was the latest on the board.
+    const Move& m = undo_ctx.move;
 
+    if (m.type == MoveType::NONE) return false;
+
+    // NOTE(Tejas): After makeMove the moving piece sits at m.to.
+    //              For promotions the piece at m.to is the promoted piece, not
+    //              the original pawn — the switch handles that case explicitly.
     Piece moving_piece = getPieceAt(m.to);
     if (moving_piece.isEmpty()) return false;
 
+    bool move_unmade = false;
+
     switch (m.type) {
 
-    case MoveType::QUIET: 
+    case MoveType::QUIET:
     case MoveType::DOUBLE_PAWN_PUSH: {
 
         setPieceAt(m.to, Piece::nopiece());
@@ -477,22 +532,22 @@ bool Board::unMakeMove(const Move& m) {
 
     } break;
 
-    case MoveType::PROMO_KNIGHT:
-    case MoveType::PROMO_BISHOP:
-    case MoveType::PROMO_ROOK:
-    case MoveType::PROMO_QUEEN: {
+    case MoveType::CAPTURE: {
 
-        setPieceAt(m.to, Piece::nopiece());
-        setPieceAt(m.from, Chess::Piece(PType::PAWN, moving_piece.color()));
+        setPieceAt(m.to, m.captured_piece);
+        setPieceAt(m.from, moving_piece);
 
         move_unmade = true;
+
     } break;
-         
+
     case MoveType::EN_PASSANT: {
 
         setPieceAt(m.to, Piece::nopiece());
         setPieceAt(m.from, moving_piece);
 
+        // NOTE(Tejas): Restore the captured pawn at the square it was on
+        //              before the en passant (one rank behind m.to).
         int dir = (moving_piece.color() == PColor::LIGHT) ? -8 : +8;
         Square captured_pawn_sq(m.to.toIndex() + dir);
         setPieceAt(captured_pawn_sq, Piece(PType::PAWN, (moving_piece.color() == PColor::LIGHT) ? PColor::DARK : PColor::LIGHT));
@@ -505,18 +560,15 @@ bool Board::unMakeMove(const Move& m) {
         setPieceAt(m.to, Piece::nopiece());
         setPieceAt(m.from, moving_piece);
 
+        // NOTE(Tejas): Move the rook back to its starting square.
         if (m.to == Square(0, 1)) {
             setPieceAt(Square(0, 0), Piece(PType::ROOK, PColor::LIGHT));
             setPieceAt(Square(0, 2), Piece::nopiece());
-
-            _castling_rights |= CastlingRights::LIGHT_KING_SIDE | CastlingRights::LIGHT_QUEEN_SIDE;
         }
 
         if (m.to == Square(7, 1)) {
             setPieceAt(Square(7, 0), Piece(PType::ROOK, PColor::DARK));
             setPieceAt(Square(7, 2), Piece::nopiece());
-
-            _castling_rights |= CastlingRights::DARK_KING_SIDE | CastlingRights::DARK_QUEEN_SIDE;
         }
 
         move_unmade = true;
@@ -528,20 +580,33 @@ bool Board::unMakeMove(const Move& m) {
         setPieceAt(m.to, Piece::nopiece());
         setPieceAt(m.from, moving_piece);
 
+        // NOTE(Tejas): Move the rook back to its starting square.
         if (m.to == Square(0, 5)) {
             setPieceAt(Square(0, 7), Piece(PType::ROOK, PColor::LIGHT));
             setPieceAt(Square(0, 4), Piece::nopiece());
-        } 
+        }
 
         if (m.to == Square(7, 5)) {
             setPieceAt(Square(7, 7), Piece(PType::ROOK, PColor::DARK));
             setPieceAt(Square(7, 4), Piece::nopiece());
-         }
+        }
 
         move_unmade = true;
 
     } break;
-         
+
+    case MoveType::PROMO_KNIGHT:
+    case MoveType::PROMO_BISHOP:
+    case MoveType::PROMO_ROOK:
+    case MoveType::PROMO_QUEEN: {
+
+        // NOTE(Tejas): The piece at m.to is the promoted piece; restore a pawn at m.from.
+        setPieceAt(m.to, Piece::nopiece());
+        setPieceAt(m.from, Chess::Piece(PType::PAWN, moving_piece.color()));
+
+        move_unmade = true;
+    } break;
+
     case MoveType::PROMO_CAPTURE_KNIGHT:
     case MoveType::PROMO_CAPTURE_BISHOP:
     case MoveType::PROMO_CAPTURE_ROOK:
@@ -554,21 +619,17 @@ bool Board::unMakeMove(const Move& m) {
 
     } break;
 
-    case MoveType::CAPTURE: {
-
-        setPieceAt(m.to, m.captured_piece);
-        setPieceAt(m.from, moving_piece);
-
-        move_unmade = true;
-        
-    } break;
-
-
     default: {} break;
 
     }
 
-    if (move_unmade) changeTurn();
+    if (move_unmade) {
+        // NOTE(Tejas): Restore all irreversible state saved before makeMove ran.
+        _castling_rights   = undo_ctx.castling_rights;
+        _en_passant_target = undo_ctx.en_passant_target;
+        changeTurn();
+        _computeHash();
+    }
     return move_unmade;
 }
 
@@ -603,4 +664,8 @@ u8 Board::getCastlingRights() const {
 Square Board::getEnPassantTarget() const {
 
     return _en_passant_target;
+}
+
+u64 Board::getHash() const {
+    return _hash;
 }

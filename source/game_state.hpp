@@ -8,6 +8,8 @@
 #include "core/move.hpp"
 #include "core/movegen.hpp"
 
+#include <vector>
+
 #include "render.hpp"
 #include "assets.hpp"
 #include "menu.hpp"
@@ -44,7 +46,8 @@ namespace State {
         // NOTE(Tejas): List of current legal moves for the selected piece, if any.
         MoveList m_move_list; 
 
-        Move m_last_move; 
+        // NOTE(Tejas): Stack of undo contexts so LEFT key can walk back through history.
+        std::vector<Chess::Board::UndoContext> m_undo_stack; 
 
         Theme m_theme;
 

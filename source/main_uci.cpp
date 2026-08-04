@@ -58,7 +58,8 @@ void move(std::string move_string) {
 
     for (const Move& move : move_list) {
         if (move.from == from && move.to == to) {
-            if (board->makeMove(move)) return;
+            Chess::Board::UndoContext undo_ctx;
+            if (board->makeMove(move, undo_ctx)) return;
         }
     }
 }
@@ -168,7 +169,10 @@ void initCommands(void) {
     });
 }
 
+#include "core/zobrist.hpp"
+
 void initBoard(void) {
+    Chess::Zobrist::init();
     MoveGen::init();
     board = std::make_shared<Chess::Board>();
 }

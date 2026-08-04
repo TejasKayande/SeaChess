@@ -9,6 +9,10 @@
 #include <bit>
 #include <chrono>
 
+namespace Engine {
+    TranspositionTable g_tt(32); // 32MB TT table
+}
+
 namespace {
 
     struct SearchContext {
@@ -166,6 +170,14 @@ namespace {
 
         if (depth == 0) return Engine::evaluate(board);
 
+        int originalAlpha = alpha;
+        int ttScore;
+        Move ttMove;
+
+        if (Engine::g_tt.probe(board->getHash(), depth, alpha, beta, ttScore, ttMove)) {
+            return ttScore;
+        }
+
         MoveList move_list;
         MoveGen::Legal::generateAllMoves(board, move_list);
 
@@ -176,25 +188,49 @@ namespace {
             return 0; // stalemate
         }
 
+        if (ttMove.type != MoveType::NONE) {
+            for (size_t i = 0; i < move_list.size(); ++i) {
+                if (move_list[i].from.index == ttMove.from.index && move_list[i].to.index == ttMove.to.index) {
+                    std::swap(move_list[0], move_list[i]);
+                    break;
+                }
+            }
+        }
+
         int best = -100000;
+        Move bestMove;
 
         for (Move move : move_list) {
 
             Chess::Board temp_board = *board;
+            Chess::Board::UndoContext undo_ctx;
 
-            if (temp_board.makeMove(move)) {
+            if (temp_board.makeMove(move, undo_ctx)) {
 
                 int score = -negamax(&temp_board, depth - 1, play + 1, -beta, -alpha, search_context);
                 // board->unMakeMove(move);
 
                 if (search_context.stop) return 0;
 
-                best = std::max(best, score);
+                if (score > best) {
+                    best = score;
+                    bestMove = move;
+                }
+
                 alpha = std::max(alpha, score);
 
                 if (alpha >= beta) break;
             }
         }
+
+        Engine::TTFlag flag = Engine::TTFlag::EXACT;
+        if (best <= originalAlpha) {
+            flag = Engine::TTFlag::UPPERBOUND;
+        } else if (best >= beta) {
+            flag = Engine::TTFlag::LOWERBOUND;
+        }
+
+        Engine::g_tt.store(board->getHash(), depth, best, flag, bestMove);
 
         return best;
     }
@@ -342,7 +378,8 @@ Move Engine::getBestMove(Chess::Board *board) {
     for (Move move : move_list) {
 
         Chess::Board temp_board = *board;
-        if (temp_board.makeMove(move)) {
+        Chess::Board::UndoContext undo_ctx;
+        if (temp_board.makeMove(move, undo_ctx)) {
 
             int eval = -negamax(&temp_board, depth - 1, 1, -100000, 100000, search_context);
 
@@ -381,7 +418,8 @@ Move Engine::searchTimed(Chess::Board *board, int time_ms) {
         for (Move move : moveList) {
 
             Chess::Board temp = *board;
-            if (!temp.makeMove(move)) continue;
+            Chess::Board::UndoContext undo_ctx;
+            if (!temp.makeMove(move, undo_ctx)) continue;
 
             int score = -negamax(&temp, depth - 1, 1, -100000, 100000, search_context);
 

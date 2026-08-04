@@ -76,8 +76,16 @@ namespace Chess {
 
         void reset();
 
-        bool makeMove(const Move& m);
-        bool unMakeMove(const Move& m);
+        // NOTE(Tejas): UndoContext captures all irreversible board state needed
+        //              to correctly restore the position after unMakeMove.
+        struct UndoContext {
+            Move move;
+            u8 castling_rights;
+            Square en_passant_target;
+        };
+
+        bool makeMove(const Move& m, UndoContext& undo_ctx);
+        bool unMakeMove(const UndoContext& undo_ctx);
 
         BitBoard getOccupied() const;
         BitBoard getOccupied(Player p) const;
@@ -86,6 +94,7 @@ namespace Chess {
 
         u8 getCastlingRights() const;
         Square getEnPassantTarget() const;
+        u64 getHash() const;
 
     private:
 
@@ -101,9 +110,11 @@ namespace Chess {
 
         u8 _castling_rights;
         Square _en_passant_target;
+        u64 _hash;
 
     private:
 
         void _updateOccupancy();
+        void _computeHash();
     };
 } // namespace Chess

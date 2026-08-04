@@ -16,7 +16,8 @@ unsigned long PerfTest::perft(Chess::Board* board, int depth) {
     for (const Move& move : move_list) {
 
         Chess::Board copy = *board;
-        if (copy.makeMove(move)) nodes += perft(&copy, depth - 1);
+        Chess::Board::UndoContext undo_ctx;
+        if (copy.makeMove(move, undo_ctx)) nodes += perft(&copy, depth - 1);
     }
 
     return nodes;
@@ -51,7 +52,8 @@ void PerfTest::divide(Chess::Board* board, int depth) {
 
         Chess::Board copy = *board;
 
-        if (copy.makeMove(move)) {
+        Chess::Board::UndoContext undo_ctx;
+        if (copy.makeMove(move, undo_ctx)) {
             unsigned long nodes = perft(&copy, depth - 1);
             total += nodes;
             std::cout << move.from.toString() << move.to.toString() << ": " << nodes << "\n";

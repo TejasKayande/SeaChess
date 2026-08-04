@@ -10,7 +10,9 @@ add_library(chess_core
     source/core/board.cpp
     source/core/movegen.cpp
     source/core/perft.cpp
+    source/core/zobrist.cpp
     source/engine/engine.cpp
+    source/engine/tt.cpp
 )
 
 add_executable(seachess_uci

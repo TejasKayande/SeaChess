@@ -16,7 +16,11 @@ TODO(Tejas):
 - [ ] Make the window resizable.
 */
 
+#include "core/zobrist.hpp"
+
 auto main(void) -> int {
+
+    Chess::Zobrist::init();
 
     ::InitWindow(Window::WINDOW_WIDTH, Window::WINDOW_HEIGHT, "Chess");
     ::InitAudioDevice();

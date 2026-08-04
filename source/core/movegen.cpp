@@ -949,12 +949,13 @@ void Legal::generateAllMoves(const Chess::Board* board, MoveList& move_list) {
 
     for (const Move &move : pseudo_moves) {
 
-        // TODO(Tejas): Use undo move instead of making a copy.
-        if (temp_board.makeMove(move)) {
+        // NOTE(Tejas): Use undo move to avoid a full board copy per move.
+        Chess::Board::UndoContext undo_ctx;
+        if (temp_board.makeMove(move, undo_ctx)) {
             if (!inCheck(&temp_board, board->getTurn())) {
                 move_list.push_back(move);
             }
-            temp_board.unMakeMove(move);
+            temp_board.unMakeMove(undo_ctx);
         }
     }
 }
@@ -968,11 +969,12 @@ void Legal::generateMovesForSquare(const Chess::Board* board, Chess::Square sq, 
 
     for (const Move &move : pseudo_moves) {
 
-        if (temp_board.makeMove(move)) {
+        Chess::Board::UndoContext undo_ctx;
+        if (temp_board.makeMove(move, undo_ctx)) {
             if (!inCheck(&temp_board, board->getTurn())) {
                 move_list.push_back(move);
             }
-            temp_board.unMakeMove(move);
+            temp_board.unMakeMove(undo_ctx);
         }
     }
 }

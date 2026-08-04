@@ -16,7 +16,7 @@ GameState::GameState() {
     Assets::init();
     MoveGen::init();
 
-    m_last_move = Move();
+    m_undo_stack = {};
 
     m_theme = Themes::DEFAULT;
 
@@ -121,7 +121,7 @@ GameState::GameState() {
                 m_board->reset(); 
                 m_game_over_text = "";
                 m_is_game_over = false;
-                m_last_move = Move();
+                m_undo_stack = {};
                 m_move_list.clear();
                 m_sel_square = Chess::Square::invalid();
                 Window::toggleMenu();
@@ -187,9 +187,10 @@ WindowEvent GameState::update() {
     }
 
     if (::IsKeyPressed(::KEY_LEFT) && !m_is_game_over) {
-        if (m_board->unMakeMove(m_last_move)) {
+        if (!m_undo_stack.empty()) {
+            m_board->unMakeMove(m_undo_stack.back());
+            m_undo_stack.pop_back();
             m_move_list.clear();
-            m_last_move = Move();
             m_sel_square = Chess::Square::invalid();
         }
     }
@@ -201,11 +202,12 @@ WindowEvent GameState::update() {
 
     if (m_playing_engine && m_board->getTurn() == m_engine_player) {
         // Move best_move = Engine::getBestMove(m_board);
-        Move best_move  = Engine::searchTimed(m_board, 1000);
-        m_board->makeMove(best_move);
+        Move best_move = Engine::searchTimed(m_board, 1000);
+        Chess::Board::UndoContext engine_undo_ctx;
+        m_board->makeMove(best_move, engine_undo_ctx);
+        m_undo_stack.push_back(engine_undo_ctx);
         m_move_list.clear();
         m_sel_square = Chess::Square::invalid();
-        m_last_move = best_move;
         move_made = true;
     }
 
@@ -256,7 +258,9 @@ WindowEvent GameState::update() {
                             default: {} break;
                         }
 
-                        if (m_board->makeMove(move)) {
+                        Chess::Board::UndoContext player_undo_ctx;
+                        if (m_board->makeMove(move, player_undo_ctx)) {
+                            m_undo_stack.push_back(player_undo_ctx);
 
                             switch (move.type) {
                                 case Move::KING_CASTLE:
@@ -285,7 +289,6 @@ WindowEvent GameState::update() {
                         m_move_list.clear();
                         m_sel_square = Chess::Square::invalid();
 
-                        m_last_move = move;
                         break;
                     }
                 }
