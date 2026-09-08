@@ -4,6 +4,7 @@
 #include "piece.hpp"
 #include "square.hpp"
 #include "move.hpp"
+#include "move_stack.hpp"
 
 #include <string>
 
@@ -76,16 +77,15 @@ namespace Chess {
 
         void reset();
 
-        // NOTE(Tejas): UndoContext captures all irreversible board state needed
-        //              to correctly restore the position after unMakeMove.
-        struct UndoContext {
-            Move move;
-            u8 castling_rights;
-            Square en_passant_target;
-        };
+        using UndoContext = Chess::UndoContext;
 
+        bool makeMove(const Move& m);
         bool makeMove(const Move& m, UndoContext& undo_ctx);
+        bool unMakeMove();
         bool unMakeMove(const UndoContext& undo_ctx);
+
+        MoveStack& getMoveStack();
+        const MoveStack& getMoveStack() const;
 
         BitBoard getOccupied() const;
         BitBoard getOccupied(Player p) const;
@@ -111,6 +111,7 @@ namespace Chess {
         u8 _castling_rights;
         Square _en_passant_target;
         u64 _hash;
+        MoveStack _move_stack;
 
     private:
 
