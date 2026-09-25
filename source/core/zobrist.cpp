@@ -18,13 +18,8 @@ namespace Chess {
                 }
             }
 
-            for (int i = 0; i < 8; ++i) {
-                enPassantKeys[i] = rng();
-            }
-
-            for (int i = 0; i < 16; ++i) {
-                castlingKeys[i] = rng();
-            }
+            for (int i = 0; i < 8; ++i) enPassantKeys[i] = rng();
+            for (int i = 0; i < 16; ++i) castlingKeys[i] = rng();
 
             sideToMoveKey = rng();
         }
