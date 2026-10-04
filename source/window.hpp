@@ -25,7 +25,7 @@ namespace Window {
 
     constexpr int STATUS_WIDTH  = BOARD_SIZE;
     constexpr int STATUS_HEIGHT = 20;
-#if 0
+#if 1
     constexpr int INFORMATION_WIDTH  = BOARD_SIZE / 2;
     constexpr int INFORMATION_HEIGHT = BOARD_SIZE + INFORMATION_WIDTH;
 #else

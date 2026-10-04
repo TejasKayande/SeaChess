@@ -4,6 +4,29 @@
 
 using namespace State;
 
+static void playSound(MoveType type) {
+    switch (type) {
+
+        case Move::KING_CASTLE:
+        case Move::QUEEN_CASTLE: {
+            ::PlaySound(Assets::CASTLE_SOUND);
+        } break;
+
+        case Move::CAPTURE:
+        case Move::PROMO_CAPTURE_KNIGHT:
+        case Move::PROMO_CAPTURE_BISHOP:
+        case Move::PROMO_CAPTURE_ROOK:
+        case Move::PROMO_CAPTURE_QUEEN:
+        case Move::EN_PASSANT: {
+            ::PlaySound(Assets::CAPTURE_SOUND);
+        } break;
+
+        default: {
+            ::PlaySound(Assets::MOVE_SOUND);
+        } break;
+    }
+}
+
 GameState::GameState() {
 
     m_is_board_flipped = true;  // flipped board mean white is at the bottom
@@ -209,6 +232,7 @@ WindowEvent GameState::update() {
         m_move_list.clear();
         m_sel_square = Chess::Square::invalid();
         move_made = true;
+        playSound(best_move.type);
     }
 
     if (::IsMouseButtonPressed(0)) {
@@ -261,27 +285,7 @@ WindowEvent GameState::update() {
                         Chess::Board::UndoContext player_undo_ctx;
                         if (m_board->makeMove(move, player_undo_ctx)) {
                             m_undo_stack.push_back(player_undo_ctx);
-
-                            switch (move.type) {
-                                case Move::KING_CASTLE:
-                                case Move::QUEEN_CASTLE: {
-                                    ::PlaySound(Assets::CASTLE_SOUND);
-                                } break;
-
-                                case Move::CAPTURE:
-                                case Move::PROMO_CAPTURE_KNIGHT:
-                                case Move::PROMO_CAPTURE_BISHOP:
-                                case Move::PROMO_CAPTURE_ROOK:
-                                case Move::PROMO_CAPTURE_QUEEN:
-                                case Move::EN_PASSANT: {
-                                    ::PlaySound(Assets::CAPTURE_SOUND);
-                                } break;
-
-                                default: {
-                                    ::PlaySound(Assets::MOVE_SOUND);
-                                    break;
-                                } break;
-                            }
+                            playSound(move.type);
                         }
 
                         move_made = true;
