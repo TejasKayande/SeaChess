@@ -224,7 +224,7 @@ WindowEvent GameState::update() {
     bool move_made = false;
 
     if (m_playing_engine && m_board->getTurn() == m_engine_player) {
-        // Move best_move = Engine::getBestMove(m_board);
+        // Move best_move = Engine::getBestMove(m_board, 5);
         Move best_move = Engine::searchTimed(m_board, 1000);
         Chess::Board::UndoContext engine_undo_ctx;
         m_board->makeMove(best_move, engine_undo_ctx);

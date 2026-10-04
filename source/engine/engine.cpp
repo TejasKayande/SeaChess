@@ -357,9 +357,7 @@ int Engine::evaluate(Chess::Board *board) {
     return board->getTurn() == Chess::Player::LIGHT ? score : -score; 
 }
 
-Move Engine::getBestMove(Chess::Board *board) {
-
-    int depth = 5;
+Move Engine::getBestMove(Chess::Board *board, int depth) {
 
     SearchContext search_context;
     search_context.start = std::chrono::steady_clock::now();

@@ -11,7 +11,7 @@ namespace Engine {
 
     int evaluate(Chess::Board *board);
 
-    Move getBestMove(Chess::Board *board);
+    Move getBestMove(Chess::Board *board, int depth);
     Move searchTimed(Chess::Board *board, int time_ms);
 
 } // namespace Engine

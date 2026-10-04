@@ -6,10 +6,37 @@
 #include "core/board.hpp"
 #include "core/movegen.hpp"
 #include "core/perft.hpp"
+#include "engine/engine.hpp"
 
 #include <string>
 #include <iostream>
 #include <functional>
+
+static std::string squareToUci(const Chess::Square& square) {
+
+    int rank = square.rank();
+    int file = square.file();
+
+    char file_char = 'h' - file;
+    char rank_char = '1' + rank;
+
+    std::string result;
+
+    result += file_char;
+    result += rank_char;
+
+    return result;
+}
+
+static std::string moveToUci(const Move& move) {
+
+    std::string result;
+
+    result += squareToUci(move.from);
+    result += squareToUci(move.to);
+
+    return result;
+}
 
 using Args = std::vector<std::string>;
 
@@ -99,16 +126,156 @@ void position(Args& args) {
         }
     }
 }
-
 void go(Args& args) {
-    if (args.size() < 1) {
-        std::cout << "position command should have at least 1 argument" << std::endl;
+
+    if (args.empty()) return;
+
+    // NOTE(Tejas): For perft testing
+    if (args[0] == "perft") {
+
+        if (args.size() < 2) return;
+
+        int depth = std::stoi(args[1]);
+        PerfTest::runPerftest(board.get(), depth);
+
         return;
     }
 
-    if (args.size() >= 2 && args[0] == "perft") {
+    // NOTE(Tejas): For Depth as the argument
+    if (args[0] == "depth") {
+
+        if (args.size() < 2) return;
+
         int depth = std::stoi(args[1]);
-        PerfTest::runPerftest(board.get(), depth);
+        if (depth <= 0) return;
+
+        Move best_move = Engine::getBestMove(board.get(), depth);
+
+        std::cout << "bestmove " << moveToUci(best_move) << std::endl;
+
+        return;
+    }
+
+    // NOTE(Tejas): go movetime <milliseconds>
+    if (args[0] == "movetime") {
+
+        if (args.size() < 2) return;
+
+        int time_ms = std::stoi(args[1]);
+        if (time_ms <= 0) return;
+
+        Move best_move = Engine::searchTimed(board.get(), time_ms);
+        std::cout << "bestmove " << moveToUci(best_move) << std::endl;
+        return;
+    }
+
+    // NOTE(Tejas): general UCI search parameters
+    int depth = -1;
+    int move_time = -1;
+
+    int white_time = -1;
+    int black_time = -1;
+
+    int white_increment = 0;
+    int black_increment = 0;
+
+    int moves_to_go = -1;
+
+    bool infinite = false;
+
+    for (size_t i = 0; i < args.size(); ++i) {
+
+        const std::string& arg = args[i];
+
+        if (arg == "depth" && i + 1 < args.size()) {
+
+            depth = std::stoi(args[++i]);
+
+        } else if (arg == "movetime" && i + 1 < args.size()) {
+
+            move_time = std::stoi(args[++i]);
+
+        } else if (arg == "wtime" && i + 1 < args.size()) {
+
+            white_time = std::stoi(args[++i]);
+
+        } else if (arg == "btime" && i + 1 < args.size()) {
+
+            black_time = std::stoi(args[++i]);
+
+        } else if (arg == "winc" && i + 1 < args.size()) {
+
+            white_increment = std::stoi(args[++i]);
+
+        } else if (arg == "binc" && i + 1 < args.size()) {
+
+            black_increment = std::stoi(args[++i]);
+
+        } else if (arg == "movestogo" && i + 1 < args.size()) {
+
+            moves_to_go = std::stoi(args[++i]);
+
+        } else if (arg == "infinite") {
+
+            infinite = true;
+        }
+    }
+
+    // NOTE(Tejas): go depth N
+    if (depth > 0) {
+        Move best_move = Engine::getBestMove(board.get(), depth);
+        std::cout << "bestmove " << moveToUci(best_move) << std::endl;
+        return;
+    }
+
+    // NOTE(Tejas) go movetime N
+    if (move_time > 0) {
+        Move best_move = Engine::searchTimed(board.get(), move_time);
+        std::cout << "bestmove " << moveToUci(best_move) << std::endl;
+        return;
+    }
+
+    // NOTE(Tejas): go wtime/btime/winc/binc
+    if (white_time >= 0 || black_time >= 0) {
+
+        int time_left;
+
+        if (board->getTurn() == Chess::PColor::LIGHT) time_left = white_time;
+        else time_left = black_time;
+
+        int increment;
+
+        if (board->getTurn() == Chess::PColor::LIGHT) increment = white_increment;
+        else increment = black_increment;
+
+        if (time_left <= 0) return;
+
+        // NOTE(Tejas): Basic time allocation.
+        // If movestogo is provided, spread the remaining time
+        // across the expected number of moves.
+        // Otherwise assume roughly 30 moves remain.
+
+        int moves = moves_to_go > 0 ? moves_to_go : 30;
+
+        int allocated_time = time_left / moves;
+        allocated_time += increment * 3 / 4;
+        allocated_time = std::min(allocated_time, time_left - 50);
+
+        if (allocated_time < 1) allocated_time = 1;
+
+        Move best_move = Engine::searchTimed(board.get(), allocated_time);
+        std::cout << "bestmove " << moveToUci(best_move) << std::endl;
+        return;
+    }
+
+    // NOTE(Tejas): go infinite
+    if (infinite) {
+
+        constexpr int infinite_depth = 64;
+
+        Move best_move = Engine::getBestMove(board.get(), infinite_depth);
+        std::cout << "bestmove " << moveToUci(best_move) << std::endl;
+        return;
     }
 }
 
