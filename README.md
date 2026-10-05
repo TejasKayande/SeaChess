@@ -1,197 +1,192 @@
 # SeaChess
 
-## Overview
+SeaChess is a chess engine written in C++23.
 
-**SeaChess** is my second iteration of a chess engine written in C/C++.
+The project is focused on the implementation of a chess engine from the ground up, with particular attention to board representation, move generation, search, hashing, and performance.
 
-This version is a **complete architectural rewrite** of a previous implementation, with a focus on building a scalable and maintainable engine core.
+![SeaChess](assets/seachess.png)
 
----
+## Features
 
-## Why a Rewrite?
-
-The first version achieved functional progress, including board representation and core mechanics. However, as complexity increased, several issues became clear:
-
-* Tight coupling between board state, rules, and move logic
-* Implicit state handling (deriving state from board instead of tracking it explicitly)
-* Poor separation between engine, platform, and rendering layers
-* Increasing difficulty in extending features like move generation and validation
-
-Rather than continuing to patch these issues, the engine was rebuilt with a stronger architectural foundation.
-
----
-
-## Core Design Principles
-
-* **Separation of concerns**: Attack generation, move generation, and board state are isolated
-* **Explicit data flow**: No hidden or implicit state derivation
-* **Bitboard-first design**: Performance-oriented representation from the ground up
-* **Scalability**: Designed to support search, evaluation, and multiple frontends
-
----
+- 64-bit bitboard board representation
+- Precomputed pawn, knight, and king attack tables
+- Magic bitboards for bishop and rook attacks
+- Legal move generation
+- Castling
+- En passant
+- Pawn promotion
+- FEN parsing
+- Make and unmake move support
+- Zobrist hashing
+- Negamax with alpha-beta pruning
+- Transposition table
+- Move ordering
+- Piece-square evaluation
+- UCI interface
+- Perft support
 
 ## Architecture
 
-The engine is structured around two core layers:
+The engine is split into a reusable core and separate frontends.
 
-### Attack Layer
+```text
+chess_core
+    Board
+    Move generation
+    Perft
+    Zobrist hashing
+    Search
+    Transposition table
 
-Handles raw geometric movement independent of game rules:
+        |
+        +----------------+
+        |                |
+    seachess_uci      seachess
+      UCI CLI           GUI
+```
 
-* Precomputed attack tables:
+The core does not depend on the GUI. This allows the same engine implementation to be used through the graphical application or through the UCI interface.
 
-  * Pawn
-  * Knight
-  * King
+## Board Representation
 
-* Dynamic attack generation for sliding pieces:
+SeaChess uses bitboards to represent piece positions.
 
-  * Bishop
-  * Rook
-  * Queen
+Each piece type has its own 64-bit bitboard, with separate occupancy bitboards for each side and the complete board.
 
-This layer is **pure and stateless**, operating only on board geometry and occupancy.
+Sliding piece attacks use magic bitboards with precomputed lookup tables.
 
----
+```text
+Board
+ ├── Light pieces
+ │   ├── Pawn
+ │   ├── Knight
+ │   ├── Bishop
+ │   ├── Rook
+ │   ├── Queen
+ │   └── King
+ │
+ ├── Dark pieces
+ │   ├── Pawn
+ │   ├── Knight
+ │   ├── Bishop
+ │   ├── Rook
+ │   ├── Queen
+ │   └── King
+ │
+ └── Occupancy
+```
 
-### Pseudo-Legal Move Generation
+## Move Generation
 
-Applies game rules on top of attack data:
+Move generation is separated into attack generation and game rules.
 
-* Filters out friendly collisions
-* Identifies captures vs quiet moves
-* Generates move lists per piece type
+Non-sliding attacks are obtained from precomputed tables. Bishop and rook attacks use magic-bitboard lookup tables, while queen attacks combine the corresponding bishop and rook attacks.
 
-This separation ensures:
+Generated moves are then filtered for legality, including king safety and special moves.
 
-* Cleaner logic
-* Easier debugging
-* Extensibility toward legal move generation
+## Search
 
----
+The engine currently uses negamax with alpha-beta pruning.
 
-## Improvements Over Previous Version
+A transposition table stores previously searched positions using Zobrist hashes. The search also uses the transposition table's best move for move ordering.
 
-### Structural Improvements
+The evaluation function currently includes material and positional terms such as piece-square tables, mobility, bishop pair, king safety, and rook positioning.
 
-* Clear separation between:
+## UCI
 
-  * Attack generation
-  * Move generation
-  * Board representation
+SeaChess includes a separate UCI executable.
 
-* Reduced coupling across components
+Example:
 
-* Removal of implicit state inference
+```text
+uci
+isready
+position startpos
+go depth 8
+```
 
-* More predictable and testable logic
+This keeps the engine independent from the GUI and allows it to be used with UCI-compatible chess software.
 
----
+## Perft
 
-### Performance Improvements
+Perft is included for testing move generation against known chess positions.
 
-* Efficient bitboard iteration using LSB extraction
-* Precomputed attack tables for constant-time lookups
-* Occupancy-aware sliding piece generation
-* Reduced redundant computation in move filtering
+Example:
 
----
+```text
+seachess_uci
+```
 
-### Code Quality Improvements
+The UCI executable can be used to run positions and inspect generated moves while developing the engine.
 
-* Consistent data flow and naming
-* Elimination of fragile, indirect logic
-* Easier reasoning about move generation
-* Designed for future extensibility
+## Project Structure
 
----
+```text
+source/
+├── core/
+│   ├── board.cpp
+│   ├── movegen.cpp
+│   ├── perft.cpp
+│   └── zobrist.cpp
+│
+├── engine/
+│   ├── engine.cpp
+│   └── tt.cpp
+│
+├── main_uci.cpp
+├── main_gui.cpp
+├── window.cpp
+├── render.cpp
+├── assets.cpp
+└── game_state.cpp
 
-## Current Features
+dependencies/
+└── raylib
+```
 
-* Bitboard-based board representation
+The engine core is built as its own CMake library and is linked by both the UCI executable and the graphical application.
 
-* Pseudo-legal move generation for:
+## Building
 
-  * Pawn
-  * Knight
-  * Bishop
-  * Rook
-  * Queen
-  * King
+Requirements:
 
-* Precomputed attack tables:
+- C++23 compiler
+- CMake 3.15 or newer
+- Raylib
 
-  * Pawn
-  * Knight
-  * King
+Build with CMake:
 
-* Occupancy-based sliding attack generation
+```bash
+cmake -S . -B build
+cmake --build build --config Release
+```
 
----
+This produces two applications:
 
-## Work in Progress / Next Steps
+```text
+seachess
+seachess_uci
+```
 
-* Legal move generation (check detection)
-* Pawn promotions
-* En passant
-* Castling
-* Move encoding refinement
-* Search (Minimax / Alpha-Beta pruning)
-* Evaluation function
+`seachess` launches the graphical application.
 
----
+`seachess_uci` runs the engine through the UCI interface.
 
-## Known Limitations (Current Stage)
+## Current Focus
 
-* Move encoding is minimal and will be extended to support:
+The project is still under active development.
 
-  * Promotions
-  * Special moves
+The main areas I'm currently working on are:
 
-* Pawn logic will be further modularized for:
+- Improving search performance
+- Improving move ordering
+- Expanding the evaluation function
+- Improving engine benchmarks
+- Expanding perft and correctness testing
+- Refining the UCI interface
 
-  * Pushes
-  * Captures
-  * Special cases
+## Why I Built It
 
-* Some internal APIs (e.g., square vs index usage) will be standardized
+SeaChess started as an attempt to understand how chess engines work by implementing the important components myself rather than relying on an existing chess library.
 
----
-
-## Tech Stack
-
-* C / C++ (core engine)
-* Bitboards for performance-critical logic
-
-Planned:
-
-* WebAssembly (WASM) for browser execution
-* C++ backend server exposing engine APIs
-* Multi-platform UI clients (web, desktop)
-
----
-
-## Lessons Learned
-
-* Architectural mistakes scale faster than features
-* Separating concerns early prevents exponential complexity
-* Rewriting with better structure is often more efficient than patching
-* Performance optimizations are only meaningful when built on clean design
-
----
-
-## Status
-
-Work in progress...
-
----
-
-## Author
-
-Built as part of a deeper exploration into:
-
-* Low-level systems programming
-* Performance-oriented design
-* Game engine architecture
-
----
+The project has since become a deeper exploration of bitboards, low-level data representation, search algorithms, hashing, and performance-oriented C++.
