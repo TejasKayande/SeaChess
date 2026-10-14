@@ -6,7 +6,7 @@
 
 namespace Menu {
 
-    class Menu; // NOTE(Tejas): This is soo cool
+    class Menu;
 
     struct MenuItem {
         std::string label;

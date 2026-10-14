@@ -3,6 +3,7 @@
 #include "game_state.hpp"
 #include "core/board.hpp"
 #include "core/movegen.hpp"
+#include "core/zobrist.hpp"
 
 #include <raylib.h>
 
@@ -15,8 +16,6 @@ TODO(Tejas):
 
 - [ ] Make the window resizable.
 */
-
-#include "core/zobrist.hpp"
 
 auto main(void) -> int {
 

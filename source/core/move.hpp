@@ -11,8 +11,6 @@ struct Move {
     Chess::Square from;
     Chess::Square to;
 
-    // TODO(Tejas): if the move was castle then we need to know what type of
-    //              castle it was...
     enum _MoveType : u8 {
 
         NONE = 0,
